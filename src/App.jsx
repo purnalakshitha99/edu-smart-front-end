@@ -5,7 +5,7 @@ function App() {
 
   return (
     <>
-     <H1>hello</H1>
+     <h1 className="ml-10 mt-[20px]">hello</h1>
     </>
   )
 }
