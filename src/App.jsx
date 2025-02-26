@@ -1,13 +1,14 @@
-import LoginPage from '../src/pages/loginPage'
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import MainPage from "./pages/MainPage";
 
 function App() {
-
-
   return (
-    <>
-     <LoginPage/>
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<MainPage />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
