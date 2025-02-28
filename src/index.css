@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+@theme {
+  --color-quiz: #9dccff;
+  --color-quizHeader: #2f327d;
+}
