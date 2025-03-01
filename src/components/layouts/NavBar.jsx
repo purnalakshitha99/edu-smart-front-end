@@ -2,7 +2,7 @@ import React from "react";
 
 const NavBar = () => {
   return (
-    <nav className="block w-full px-4 py-2 bg-white bg-opacity-90 sticky top-3 shadow lg:px-8 lg:py-3 backdrop-blur-lg backdrop-saturate-150 z-[9999]">
+    <nav className="block w-full px-4 py-2 bg-white bg-opacity-90 sticky top-0 shadow lg:px-8 lg:py-3 backdrop-blur-lg backdrop-saturate-150 ">
       <div className="container flex flex-wrap items-center justify-between mx-auto text-slate-800">
         <img src="src/assets/logo.png" alt="My Logo" className="h-16 w-16 " />
         <div className="hidden lg:block">
