@@ -7,7 +7,7 @@ function Footer() {
       <div className="w-[500px] m-auto py-5 text-center">
         <p className="text-3xl font-bold">Subscribe to get our Newsletter</p>
         <div className="flex justify-center items-center gap-4 mt-10">
-          <Input className="rounded-full" placeholder="someone@gmail.com" />
+          <Input className="rounded-full p-2" placeholder="someone@gmail.com" />
           <button className="bg-[#49BBBD] hover:bg-[#62999A] w-[180px] text-white font-semibold p-2 rounded-full">
             Subscribe
           </button>
