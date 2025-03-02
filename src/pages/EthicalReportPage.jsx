@@ -1,8 +1,14 @@
 import React from 'react'
+import NavBar from '../components/layouts/NavBar'
+import Footer from '../components/layouts/Footer'
 
 function EthicalReportPage() {
   return (
-    <div>EthicalReportPage</div>
+    <>
+
+    <NavBar />
+   <Footer/>
+    </>
   )
 }
 
