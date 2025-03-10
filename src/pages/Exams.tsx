@@ -39,9 +39,9 @@ const exams: Exam[] = [
 ];
 
 const ExamCard = ({ exam, onStart }: { exam: Exam; onStart: (id: string) => void }) => (
-  <div className="bg-white rounded-lg shadow-md p-6">
-    <h3 className="text-xl font-semibold mb-3">{exam.title}</h3>
-    <div className="space-y-2 text-gray-600 mb-4">
+  <div className="p-6 bg-white rounded-lg shadow-md">
+    <h3 className="mb-3 text-xl font-semibold">{exam.title}</h3>
+    <div className="mb-4 space-y-2 text-gray-600">
       <div className="flex items-center">
         <Clock className="w-4 h-4 mr-2" />
         <span>{exam.duration}</span>
@@ -52,7 +52,7 @@ const ExamCard = ({ exam, onStart }: { exam: Exam; onStart: (id: string) => void
     </div>
     <button
       onClick={() => onStart(exam.id)}
-      className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors"
+      className="w-full py-2 text-white transition-colors bg-blue-600 rounded-md hover:bg-blue-700"
     >
       Start Exam
     </button>
@@ -75,18 +75,18 @@ const Exams = () => {
 
   return (
     <div className="py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Available Exams</h1>
+      <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="mb-12 text-center">
+          <h1 className="mb-4 text-4xl font-bold text-gray-900">Available Exams</h1>
           <p className="text-lg text-gray-600">
             Select an exam to begin. Make sure your webcam is enabled for proctoring.
           </p>
         </div>
 
         {showWarning && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8">
+          <div className="p-4 mb-8 border-l-4 border-yellow-400 bg-yellow-50">
             <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-yellow-400 mr-2" />
+              <AlertCircle className="w-5 h-5 mr-2 text-yellow-400" />
               <p className="text-yellow-700">
                 Camera access is required to take the exam. Please ensure your browser has camera permissions enabled.
               </p>
@@ -94,7 +94,7 @@ const Exams = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {exams.map((exam) => (
             <ExamCard key={exam.id} exam={exam} onStart={handleStartExam} />
           ))}
