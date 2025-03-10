@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -11,6 +10,7 @@ import ExamRoom from './pages/ExamRoom';
 import Footer from './components/Footer';
 import ClassRoom from './pages/ClassRoom';
 import ClassTime from './pages/ClassTime';
+import Login from './pages/Login';
 
 
 function App() {
@@ -21,6 +21,7 @@ function App() {
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/company" element={<Company />} />
             <Route path="/blog" element={<Blog />} />

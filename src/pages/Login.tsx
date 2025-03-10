@@ -7,8 +7,8 @@ function AuthPage() {
   const [isLogin, setIsLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   return (
-    <div className="flex flex-row w-full max-h-screen ">
-      <div className="hidden md:block md:w-[60%] relative py-10 px-20 ">
+    <div className="flex flex-row w-full h-screen">
+      <div className="hidden md:block md:w-[60%] relative py-10 px-20">
         <img
           src={isLogin ? login : register}
           alt="Auth Visual"
@@ -21,7 +21,7 @@ function AuthPage() {
           Lorem Ipsum is simply
         </div>
       </div>
-      <div className="flex flex-col items-center justify-center px-8 sm:px-10 md:px-12 lg:px-28 w-full md:w-[40%] mt-4">
+      <div className="flex flex-col items-center justify-center px-8 sm:px-10 md:px-12 lg:px-28 h-screen w-full md:w-[40%]">
         <h1 className="text-2xl text-black font-semibold mb-6">
           Welcome to lorem...!
         </h1>
@@ -49,7 +49,7 @@ function AuthPage() {
         </h1>
 
         <div className="flex flex-col w-full gap-4">
-          {!isLogin ? (
+          {!isLogin && (
             <div className="flex flex-col gap-2 text-lg">
               <label className="text-black font-semibold">Email Address</label>
               <input
@@ -57,9 +57,6 @@ function AuthPage() {
                 placeholder="Enter your Email Address"
                 className="w-full px-4 py-2 border rounded-full border-[#49BBBD] focus:outline-none placeholder:text-gray-300"
               />
-            </div>
-          ) : (
-            <div className="h-10">
             </div>
           )}
           <div className="flex flex-col gap-2 text-lg">
