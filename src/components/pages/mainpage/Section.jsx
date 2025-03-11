@@ -1,77 +1,89 @@
 import React from "react";
+import examImage from "../../../assets/mainpage/exam.jpg";
+import classImage from "../../../assets/mainpage/class.jpg";
 
 const Section = () => {
-  return (
-    <div className="bg-gray-100 py-12">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="bg-blue-100 text-blue-500 rounded-full w-8 h-8 flex items-center justify-center mb-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 2a8 8 0 100 16 8 8 0 000-16zm-1 9a1 1 0 012 0V9a1 1 0 112 0v2a1 1 0 11-2 0V9a3 3 0 10-6 0v2a1 1 0 012 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2">
-              Class adds $30 million to its balance sheet for a Zoom-friendly
-              edtech solution
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Class, launched less than a year ago by Blackboard co-founder
-              Michael Chasen, integrates exclusively...
-            </p>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-semibold">Lina</p>
-                <a href="#" className="text-blue-500 hover:underline">
-                  Read more
-                </a>
-              </div>
-              <p className="text-sm">251,232</p>
-            </div>
-          </div>
+  const blogPosts = [
+    {
+      imageSrc: examImage,
+      title:
+        "Class adds $30 million to its balance sheet for a Zoom-friendly edtech solution",
+      description:
+        "Class, launched less than a year ago by Blackboard co-founder Michael Chasen, integrates exclusively...",
+      author: "Lina",
+      views: "251,232",
+    },
+    {
+      imageSrc: classImage,
+      title:
+        "Class adds $30 million to its balance sheet for a Zoom-friendly edtech solution",
+      description:
+        "Class, launched less than a year ago by Blackboard co-founder Michael Chasen, integrates exclusively...",
+      author: "Lina",
+      views: "251,232",
+    },
+  ];
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="bg-green-100 text-green-500 rounded-full w-8 h-8 flex items-center justify-center mb-4">
+  const RelatedBlogCard = ({ imageSrc, title, description, author, views }) => {
+    return (
+      <div className="overflow-hidden bg-white rounded-lg shadow-md">
+        <img src={imageSrc} alt={title} className="object-cover w-full h-48" />
+        <div className="p-4">
+          <h3 className="mb-2 text-lg font-semibold">{title}</h3>
+          <p className="mb-4 text-gray-600 line-clamp-2">{description}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <img
+                src="https://via.placeholder.com/32"
+                alt={author}
+                className="w-8 h-8 mr-2 rounded-full"
+              />
+              <p className="text-sm font-semibold">{author}</p>
+            </div>
+            <div className="flex items-center text-gray-500">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
+                className="w-4 h-4 mr-1"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
                 <path
                   fillRule="evenodd"
-                  d="M10 2a8 8 0 100 16 8 8 0 000-16zm-1 9a1 1 0 012 0V9a1 1 0 112 0v2a1 1 0 11-2 0V9a3 3 0 10-6 0v2a1 1 0 012 0z"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.431-8.559a3.002 3.002 0 01-4.862.559 3.002 3.002 0 01-3.569-4.181 3 3 0 016.759-1.827 3.002 3.002 0 011.672 5.449z"
                   clipRule="evenodd"
                 />
               </svg>
-            </div>
-            <h3 className="text-xl font-semibold mb-2">
-              Class adds $30 million to its balance sheet for a Zoom-friendly
-              edtech solution
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Class, launched less than a year ago by Blackboard co-founder
-              Michael Chasen, integrates exclusively...
-            </p>
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-semibold">Lina</p>
-                <a href="#" className="text-blue-500 hover:underline">
-                  Read more
-                </a>
-              </div>
-              <p className="text-sm">251,232</p>
+              <span className="text-xs">{views}</span>
             </div>
           </div>
+          <a
+            href="#"
+            className="block mt-2 text-sm text-blue-500 hover:underline"
+          >
+            Read more
+          </a>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="py-12 bg-gray-100">
+      <div className="container px-4 mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-semibold">Related Blog</h2>
+          <a href="#" className="text-sm text-blue-500 hover:underline">
+            See all
+          </a>
+        </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {blogPosts.map((post, index) => (
+            <RelatedBlogCard key={index} {...post} />
+          ))}
+        </div>
+        <div className="flex justify-end mt-4">
+          <button className="px-4 py-2 font-bold text-gray-700 bg-gray-200 rounded-l hover:bg-gray-300"></button>
+          <button className="px-4 py-2 font-bold text-white bg-green-400 rounded-r hover:bg-green-500"></button>
         </div>
       </div>
     </div>

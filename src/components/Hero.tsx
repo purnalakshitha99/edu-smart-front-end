@@ -1,19 +1,29 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Hero = () => {
+  const navigate = useNavigate();
+
+  const handleStartLearning = () => {
+    navigate('/roleselection'); // This navigates to the AuthPage
+  };
+
   return (
-    <div className="bg-blue-50 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+    <div className="py-12 bg-blue-50">
+      <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="grid items-center grid-cols-1 gap-8 md:grid-cols-2">
           <div>
-            <p className="text-sm text-gray-600 mb-2">By themadbrains in Inspiration</p>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            <p className="mb-2 text-sm text-gray-600">By themadbrains in Inspiration</p>
+            <h1 className="mb-4 text-3xl font-bold text-gray-900">
               Why Swift UI Should Be on the Radar of Every Mobile Developer
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="mb-6 text-gray-600">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor lorem ipsum dolor sit amet de aliqua tempor.
             </p>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+            <button 
+              onClick={handleStartLearning} 
+              className="px-6 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
               Start learning now
             </button>
           </div>

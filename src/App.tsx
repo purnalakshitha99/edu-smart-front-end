@@ -13,6 +13,8 @@ import AuthPage from './pages/AuthPage';
 // import PublicRoute from './components/PublicRoute';
 // import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
+import { TeacherAuth } from './pages/TeacherAuth';
+import { RoleSelection } from './pages/RoleSelection';
 
 function App() {
   return (
@@ -29,13 +31,10 @@ function App() {
           <Route path="/exams" element={<><Navbar /><Exams /><Footer /></>} />
           <Route path="/class" element={<><Navbar /><ClassTime /><Footer /></>} />
           <Route path='/Classroom' element={<><Navbar /><ClassRoom /><Footer /></>} />
-
-          {/* Auth Page (No Navbar/Footer) - Renamed from Login to AuthPage*/}
+          <Route path='/teacherlogin'element={<TeacherAuth/>}/>
           <Route path="/login" element={<AuthPage />} />
-
-          {/* Exam Room (Example of a route that *could* have Navbar/Footer) - Adjust as needed.
-             The ExamRoom component itself would need to handle if it shows a footer or not. */}
           <Route path="/exam/:examId" element={<><Navbar /><ExamRoom /><Footer /></>} />
+          <Route path='/roleselection' element={<RoleSelection/>}/>
 
         </Routes>
 
