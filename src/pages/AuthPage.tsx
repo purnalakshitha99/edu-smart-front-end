@@ -1,118 +1,288 @@
-import React, { useState } from "react";
+import React, { useState, FormEvent, useRef } from "react";  // Import useRef
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import login from "../assets/login.jpeg";
 import register from "../assets/register.jpeg";
+import axios, { AxiosError } from "axios"; // Import Axios and AxiosError
+import { Eye, EyeOff } from "lucide-react";
 
 function AuthPage() {
-  const [isLogin, setIsLogin] = useState(false);
+  const [isLogin, setIsLogin] = useState(true); // Start with login form showing
   const [showPassword, setShowPassword] = useState(false);
-  return (
-    <div className="flex flex-row w-full h-screen">
-      <div className="hidden md:block md:w-[60%] relative py-10 px-20">
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(""); // Add email state
+  const [profilePicture, setProfilePicture] = useState<File | null>(null); // Added profile picture state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const backendURL = "http://127.0.0.1:5000"; // IMPORTANT: Set your backend URL
+
+  const handleRegister = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("password", password);
+      formData.append("email", email);
+      formData.append("role", "student"); // set default value to User
+      if (profilePicture) {
+        formData.append("profile_picture", profilePicture); // Append profile picture
+      }
+
+      const response = await axios.post(`${backendURL}/auth/register`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Important for sending files
+        },
+      });
+
+      if (response.status === 201) {
+        alert("Registration successful!");
+        setIsLogin(true); // Switch to login form after successful registration
+      } else {
+        alert("Registration failed: " + response.data.message);
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+
+      let errorMessage = "Registration failed: An unknown error occurred."; // Default message
+
+      if (axios.isAxiosError(error)) {
+        // Axios-specific error
+        const axiosError = error as AxiosError;
+
+        // Safely access the message property
+        const data = axiosError.response?.data as { message?: string } | undefined;
+        errorMessage = `Registration failed: ${data?.message || axiosError.message}`;
+
+      } else if (error instanceof Error) {
+        // JavaScript Error
+        errorMessage = `Registration failed: ${error.message}`;
+      } else {
+        // Unexpected error
+        errorMessage = "Registration failed: An unexpected error occurred.";
+      }
+
+      alert(errorMessage);
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post(`${backendURL}/auth/login`, {
+        username: username,
+        password: password,
+      });
+
+      if (response.status === 200) {
+        const token = response.data.access_token;
+        localStorage.setItem("token", token); // Store the token (e.g., in localStorage)
+        alert("Login successful!");
+        // Redirect to a protected page or update UI accordingly
+      } else {
+        alert("Login failed: " + response.data.message);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+
+      let errorMessage = "Login failed: An unknown error occurred."; // Default message
+
+      if (axios.isAxiosError(error)) {
+        // Axios-specific error
+        const axiosError = error as AxiosError;
+
+        // Safely access the message property
+        const data = axiosError.response?.data as { message?: string } | undefined;
+        errorMessage = `Login failed: ${data?.message || axiosError.message}`;
+
+      } else if (error instanceof Error) {
+        // JavaScript Error
+        errorMessage = `Login failed: ${error.message}`;
+      } else {
+        // Unexpected error
+        errorMessage = "Login failed: An unexpected error occurred.";
+      }
+
+      alert(errorMessage);
+    }
+  };
+
+  const handleSubmit = (e: FormEvent) => {  // Explicitly type the event
+    e.preventDefault();
+    if (isLogin) {
+      handleLogin();
+    } else {
+      handleRegister();
+    }
+  };
+
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setProfilePicture(e.target.files[0]);
+    } else {
+      setProfilePicture(null);
+    }
+  };
+
+  const handleRemovePicture = () => {
+      setProfilePicture(null);
+      if (fileInputRef.current) {
+          fileInputRef.current.value = "";  // Clear the file input
+      }
+  };
+
+ return (
+    <div className="flex h-screen">
+      <div className="relative hidden lg:flex lg:w-1/2">
         <img
-          src={isLogin ? login : register}
-          alt="Auth Visual"
-          className="w-full h-full object-cover rounded-4xl"
+          src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80"
+          alt="Student Learning"
+          className="object-cover w-full"
         />
-        <div className="absolute bottom-40 left-24 text-white text-6xl font-bold">
-          Lorem Ipsum is simply
-        </div>
-        <div className="absolute bottom-24 left-24 text-white text-4xl font-medium">
-          Lorem Ipsum is simply
+        <div className="absolute inset-0 flex flex-col justify-end p-16 bg-gradient-to-b from-transparent to-black/70">
+          <h2 className="mb-4 text-5xl font-bold text-white">Student Portal</h2>
+          <p className="text-2xl text-white/90">Your gateway to learning and growth</p>
         </div>
       </div>
-      <div className="flex flex-col items-center justify-center px-8 sm:px-10 md:px-12 lg:px-28 h-screen w-full md:w-[40%]">
-        <h1 className="text-2xl text-black font-semibold mb-6">
-          Welcome to lorem...!
-        </h1>
-        <div className="bg-[rgba(73,187,189,0.5)] flex flex-row gap-4 px-2 py-2 rounded-full text-white text-lg mb-14">
-          <button
-            className={`${
-              isLogin ? "bg-[#49BBBD]" : ""
-            } rounded-full px-8 py-1 cursor-pointer`}
-            onClick={() => setIsLogin(true)}
-          >
-            Login
-          </button>
-          <button
-            className={`${
-              !isLogin ? "bg-[#49BBBD]" : ""
-            } rounded-full px-8 py-1 cursor-pointer`}
-            onClick={() => setIsLogin(false)}
-          >
-            Register
-          </button>
-        </div>
-        <h1 className="mb-14 text-xl text-justify">
-          Lorem Ipsum is simply dummy text of the printing and typesetting
-          industry.
-        </h1>
 
-        <div className="flex flex-col w-full gap-4">
-          {!isLogin && (
-            <div className="flex flex-col gap-2 text-lg">
-              <label className="text-black font-semibold">Email Address</label>
-              <input
-                type="email"
-                placeholder="Enter your Email Address"
-                className="w-full px-4 py-2 border rounded-full border-[#49BBBD] focus:outline-none placeholder:text-gray-300"
-              />
-            </div>
-          )}
-          <div className="flex flex-col gap-2 text-lg">
-            <label className="text-black font-semibold">User name</label>
-            <input
-              type="text"
-              placeholder="Enter your User name"
-              className="w-full px-4 py-2 border rounded-full border-[#49BBBD] focus:outline-none placeholder:text-gray-300"
-            />
+      <div className="flex flex-col justify-center w-full px-8 py-12 lg:w-1/2 sm:px-16 lg:px-24 bg-gradient-to-br from-blue-50 to-blue-100/50">
+        <div className="w-full max-w-md mx-auto">
+          <h1 className="mb-8 text-3xl font-bold text-gray-900">
+            {isLogin ? "Student Login" : "Student Registration"}
+          </h1>
+
+          <div className="flex p-1 mb-8 rounded-lg bg-white/80 backdrop-blur-sm">
+            <button
+              onClick={() => setIsLogin(true)}
+              className={`flex-1 py-2 px-4 rounded-md transition-all ${
+                isLogin
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => setIsLogin(false)}
+              className={`flex-1 py-2 px-4 rounded-md transition-all ${
+                !isLogin
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Sign Up
+            </button>
           </div>
-          <div className="flex flex-col gap-2 relative text-lg">
-            <label className="text-black font-semibold">Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your Password"
-                className="w-full px-4 py-2 border rounded-full border-[#49BBBD] focus:outline-none placeholder:text-gray-300"
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-3 flex items-center text-gray-600"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <AiOutlineEyeInvisible size={20} />
-                ) : (
-                  <AiOutlineEye size={20} />
-                )}
-              </button>
-            </div>
-          </div>
-          {isLogin && (
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" /> Remember me
-              </label>
-              <h1 className="text-black cursor-pointer">Forgot Password?</h1>
-            </div>
-          )}
-          <div className="w-full flex flex-row items-center justify-end mt-10">
-            {isLogin ? (
-              <button
-                type="submit"
-                className="w-1/2 bg-[#49BBBD] text-white py-2 rounded-full hover:bg-[rgba(73,187,189,0.5)]"
-              >
-                Login
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className="w-1/2 bg-[#49BBBD] text-white py-2 rounded-full hover:bg-[rgba(73,187,189,0.5)]"
-              >
-                Register
-              </button>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {!isLogin && (
+              <>
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
+                    placeholder="Enter your email"
+                  />
+                </div>
+
+                  {/* Profile Picture Upload */}
+                  <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Profile Picture
+                      </label>
+                      <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfilePictureChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
+                          ref={fileInputRef} // Add the ref here
+                      />
+
+                      {profilePicture && (
+                          <div className="mt-2">
+                              <img
+                                  src={URL.createObjectURL(profilePicture)}
+                                  alt="Profile Preview"
+                                  className="w-24 h-24 rounded-full object-cover"
+                              />
+                              <button
+                                  type="button"
+                                  onClick={handleRemovePicture}
+                                  className="mt-1 text-sm text-red-500 hover:text-red-700"
+                              >
+                                  Remove
+                              </button>
+                          </div>
+                      )}
+                  </div>
+              </>
             )}
-          </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Username
+              </label>
+              <input
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
+                placeholder="Enter your username"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute text-gray-500 -translate-y-1/2 right-3 top-1/2 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            {isLogin && (
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="mr-2 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-gray-600">Remember me</span>
+                </label>
+                <button
+                  type="button"
+                  className="font-medium text-blue-600 hover:text-blue-800"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full px-4 py-3 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              {isLogin ? "Sign In" : "Create Account"}
+            </button>
+          </form>
         </div>
       </div>
     </div>
