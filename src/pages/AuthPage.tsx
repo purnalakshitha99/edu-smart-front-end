@@ -20,7 +20,7 @@ function AuthPage() {
         username: username,
         password: password,
         email: email, //send the email to the backend as well.
-        role: "user", // set default value to User
+        role: "student", // set default value to User
       });
 
       if (response.status === 201) {
@@ -162,7 +162,7 @@ function AuthPage() {
                     placeholder="Enter your email"
                   />
                 </div>
-                <div>
+                {/* <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">
                     Role
                   </label>
@@ -172,7 +172,7 @@ function AuthPage() {
                     disabled
                     className="w-full px-4 py-2 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg"
                   />
-                </div>
+                </div> */}
               </>
             )}
 
