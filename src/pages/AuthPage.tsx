@@ -1,4 +1,4 @@
-import React, { useState, FormEvent } from "react";  // Import FormEvent
+import React, { useState, FormEvent, useRef } from "react";  // Import useRef
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import login from "../assets/login.jpeg";
 import register from "../assets/register.jpeg";
@@ -11,16 +11,26 @@ function AuthPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState(""); // Add email state
+  const [profilePicture, setProfilePicture] = useState<File | null>(null); // Added profile picture state
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const backendURL = "http://127.0.0.1:5000"; // IMPORTANT: Set your backend URL
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post(`${backendURL}/auth/register`, {
-        username: username,
-        password: password,
-        email: email, //send the email to the backend as well.
-        role: "student", // set default value to User
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("password", password);
+      formData.append("email", email);
+      formData.append("role", "student"); // set default value to User
+      if (profilePicture) {
+        formData.append("profile_picture", profilePicture); // Append profile picture
+      }
+
+      const response = await axios.post(`${backendURL}/auth/register`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Important for sending files
+        },
       });
 
       if (response.status === 201) {
@@ -103,6 +113,21 @@ function AuthPage() {
     }
   };
 
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setProfilePicture(e.target.files[0]);
+    } else {
+      setProfilePicture(null);
+    }
+  };
+
+  const handleRemovePicture = () => {
+      setProfilePicture(null);
+      if (fileInputRef.current) {
+          fileInputRef.current.value = "";  // Clear the file input
+      }
+  };
+
  return (
     <div className="flex h-screen">
       <div className="relative hidden lg:flex lg:w-1/2">
@@ -162,17 +187,37 @@ function AuthPage() {
                     placeholder="Enter your email"
                   />
                 </div>
-                {/* <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Role
-                  </label>
-                  <input
-                    type="text"
-                    value="Student"
-                    disabled
-                    className="w-full px-4 py-2 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg"
-                  />
-                </div> */}
+
+                  {/* Profile Picture Upload */}
+                  <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Profile Picture
+                      </label>
+                      <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfilePictureChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
+                          ref={fileInputRef} // Add the ref here
+                      />
+
+                      {profilePicture && (
+                          <div className="mt-2">
+                              <img
+                                  src={URL.createObjectURL(profilePicture)}
+                                  alt="Profile Preview"
+                                  className="w-24 h-24 rounded-full object-cover"
+                              />
+                              <button
+                                  type="button"
+                                  onClick={handleRemovePicture}
+                                  className="mt-1 text-sm text-red-500 hover:text-red-700"
+                              >
+                                  Remove
+                              </button>
+                          </div>
+                      )}
+                  </div>
               </>
             )}
 
