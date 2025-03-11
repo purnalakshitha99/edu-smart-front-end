@@ -1,52 +1,62 @@
-import React, { useState, FormEvent } from "react";  // Import FormEvent
-import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import login from "../assets/login.jpeg";
-import register from "../assets/register.jpeg";
-import axios, { AxiosError } from "axios"; // Import Axios and AxiosError
-import { Eye, EyeOff } from "lucide-react";
+import React, { useState, FormEvent } from "react";
+import { Eye, EyeOff, Upload } from "lucide-react";
+import axios, { AxiosError } from "axios";
 
 function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true); // Start with login form showing
+  const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [email, setEmail] = useState(""); // Add email state
+  const [email, setEmail] = useState("");
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
 
-  const backendURL = "http://127.0.0.1:5000"; // IMPORTANT: Set your backend URL
+  const backendURL = "http://127.0.0.1:5000";
+
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfilePicture(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post(`${backendURL}/auth/register`, {
-        username: username,
-        password: password,
-        email: email, //send the email to the backend as well.
-        role: "user", // set default value to User
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("password", password);
+      formData.append("email", email);
+      formData.append("role", "user");
+      if (profilePicture) {
+        formData.append("profilePicture", profilePicture);
+      }
+
+      const response = await axios.post(`${backendURL}/auth/register`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       if (response.status === 201) {
         alert("Registration successful!");
-        setIsLogin(true); // Switch to login form after successful registration
+        setIsLogin(true);
       } else {
         alert("Registration failed: " + response.data.message);
       }
     } catch (error) {
       console.error("Registration error:", error);
 
-      let errorMessage = "Registration failed: An unknown error occurred."; // Default message
+      let errorMessage = "Registration failed: An unknown error occurred.";
 
       if (axios.isAxiosError(error)) {
-        // Axios-specific error
         const axiosError = error as AxiosError;
-
-        // Safely access the message property
         const data = axiosError.response?.data as { message?: string } | undefined;
         errorMessage = `Registration failed: ${data?.message || axiosError.message}`;
-
       } else if (error instanceof Error) {
-        // JavaScript Error
         errorMessage = `Registration failed: ${error.message}`;
       } else {
-        // Unexpected error
         errorMessage = "Registration failed: An unexpected error occurred.";
       }
 
@@ -63,30 +73,23 @@ function AuthPage() {
 
       if (response.status === 200) {
         const token = response.data.access_token;
-        localStorage.setItem("token", token); // Store the token (e.g., in localStorage)
+        localStorage.setItem("token", token);
         alert("Login successful!");
-        // Redirect to a protected page or update UI accordingly
       } else {
         alert("Login failed: " + response.data.message);
       }
     } catch (error) {
       console.error("Login error:", error);
 
-      let errorMessage = "Login failed: An unknown error occurred."; // Default message
+      let errorMessage = "Login failed: An unknown error occurred.";
 
       if (axios.isAxiosError(error)) {
-        // Axios-specific error
         const axiosError = error as AxiosError;
-
-        // Safely access the message property
         const data = axiosError.response?.data as { message?: string } | undefined;
         errorMessage = `Login failed: ${data?.message || axiosError.message}`;
-
       } else if (error instanceof Error) {
-        // JavaScript Error
         errorMessage = `Login failed: ${error.message}`;
       } else {
-        // Unexpected error
         errorMessage = "Login failed: An unexpected error occurred.";
       }
 
@@ -94,7 +97,7 @@ function AuthPage() {
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {  // Explicitly type the event
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (isLogin) {
       handleLogin();
@@ -103,7 +106,7 @@ function AuthPage() {
     }
   };
 
- return (
+  return (
     <div className="flex h-screen">
       <div className="relative hidden lg:flex lg:w-1/2">
         <img
@@ -172,6 +175,30 @@ function AuthPage() {
                     disabled
                     className="w-full px-4 py-2 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg"
                   />
+                </div>
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Profile Picture
+                  </label>
+                  <div className="flex flex-col items-center space-y-4">
+                    {previewUrl && (
+                      <img
+                        src={previewUrl}
+                        alt="Profile Preview"
+                        className="object-cover w-32 h-32 border-4 border-white rounded-full shadow-lg"
+                      />
+                    )}
+                    <label className="flex items-center justify-center w-full px-4 py-2 transition-colors border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                      <Upload className="w-5 h-5 mr-2 text-gray-500" />
+                      <span className="text-gray-600">Choose a photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfilePictureChange}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                 </div>
               </>
             )}
