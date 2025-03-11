@@ -3,6 +3,7 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import login from "../assets/login.jpeg";
 import register from "../assets/register.jpeg";
 import axios, { AxiosError } from "axios"; // Import Axios and AxiosError
+import { Eye, EyeOff } from "lucide-react";
 
 function AuthPage() {
   const [isLogin, setIsLogin] = useState(true); // Start with login form showing
@@ -102,111 +103,142 @@ function AuthPage() {
     }
   };
 
-  return (
-    <div className="flex flex-row w-full h-screen">
-      <div className="hidden md:block md:w-[60%] relative py-10 px-20">
+ return (
+    <div className="flex h-screen">
+      <div className="relative hidden lg:flex lg:w-1/2">
         <img
-          src={isLogin ? login : register}
-          alt="Auth Visual"
-          className="w-full h-full object-cover rounded-4xl"
+          src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80"
+          alt="Student Learning"
+          className="object-cover w-full"
         />
-        <div className="absolute bottom-40 left-24 text-white text-6xl font-bold">
-          Lorem Ipsum is simply
-        </div>
-        <div className="absolute bottom-24 left-24 text-white text-4xl font-medium">
-          Lorem Ipsum is simply
+        <div className="absolute inset-0 flex flex-col justify-end p-16 bg-gradient-to-b from-transparent to-black/70">
+          <h2 className="mb-4 text-5xl font-bold text-white">Student Portal</h2>
+          <p className="text-2xl text-white/90">Your gateway to learning and growth</p>
         </div>
       </div>
-      <div className="flex flex-col items-center justify-center px-8 sm:px-10 md:px-12 lg:px-28 h-screen w-full md:w-[40%]">
-        <h1 className="text-2xl text-black font-semibold mb-6">
-          Welcome to lorem...!
-        </h1>
-        <div className="bg-[rgba(73,187,189,0.5)] flex flex-row gap-4 px-2 py-2 rounded-full text-white text-lg mb-14">
-          <button
-            className={`${
-              isLogin ? "bg-[#49BBBD]" : ""
-            } rounded-full px-8 py-1 cursor-pointer`}
-            onClick={() => setIsLogin(true)}
-          >
-            Login
-          </button>
-          <button
-            className={`${
-              !isLogin ? "bg-[#49BBBD]" : ""
-            } rounded-full px-8 py-1 cursor-pointer`}
-            onClick={() => setIsLogin(false)}
-          >
-            Register
-          </button>
-        </div>
-        <h1 className="mb-14 text-xl text-justify">
-          Lorem Ipsum is simply dummy text of the printing and typesetting
-          industry.
-        </h1>
 
-        <form className="flex flex-col w-full gap-4" onSubmit={handleSubmit}>
-          {!isLogin && (
-            <div className="flex flex-col gap-2 text-lg">
-              <label className="text-black font-semibold">Email Address</label>
-              <input
-                type="email"
-                placeholder="Enter your Email Address"
-                className="w-full px-4 py-2 border rounded-full border-[#49BBBD] focus:outline-none placeholder:text-gray-300"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-          )}
-          <div className="flex flex-col gap-2 text-lg">
-            <label className="text-black font-semibold">User name</label>
-            <input
-              type="text"
-              placeholder="Enter your User name"
-              className="w-full px-4 py-2 border rounded-full border-[#49BBBD] focus:outline-none placeholder:text-gray-300"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-2 relative text-lg">
-            <label className="text-black font-semibold">Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your Password"
-                className="w-full px-4 py-2 border rounded-full border-[#49BBBD] focus:outline-none placeholder:text-gray-300"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-3 flex items-center text-gray-600"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <AiOutlineEyeInvisible size={20} />
-                ) : (
-                  <AiOutlineEye size={20} />
-                )}
-              </button>
-            </div>
-          </div>
-          {isLogin && (
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" /> Remember me
-              </label>
-              <h1 className="text-black cursor-pointer">Forgot Password?</h1>
-            </div>
-          )}
-          <div className="w-full flex flex-row items-center justify-end mt-10">
+      <div className="flex flex-col justify-center w-full px-8 py-12 lg:w-1/2 sm:px-16 lg:px-24 bg-gradient-to-br from-blue-50 to-blue-100/50">
+        <div className="w-full max-w-md mx-auto">
+          <h1 className="mb-8 text-3xl font-bold text-gray-900">
+            {isLogin ? "Student Login" : "Student Registration"}
+          </h1>
+
+          <div className="flex p-1 mb-8 rounded-lg bg-white/80 backdrop-blur-sm">
             <button
-              type="submit"
-              className="w-1/2 bg-[#49BBBD] text-white py-2 rounded-full hover:bg-[rgba(73,187,189,0.5)]"
+              onClick={() => setIsLogin(true)}
+              className={`flex-1 py-2 px-4 rounded-md transition-all ${
+                isLogin
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
             >
-              {isLogin ? "Login" : "Register"}
+              Sign In
+            </button>
+            <button
+              onClick={() => setIsLogin(false)}
+              className={`flex-1 py-2 px-4 rounded-md transition-all ${
+                !isLogin
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Sign Up
             </button>
           </div>
-        </form>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {!isLogin && (
+              <>
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
+                    placeholder="Enter your email"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Role
+                  </label>
+                  <input
+                    type="text"
+                    value="Student"
+                    disabled
+                    className="w-full px-4 py-2 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg"
+                  />
+                </div>
+              </>
+            )}
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Username
+              </label>
+              <input
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
+                placeholder="Enter your username"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute text-gray-500 -translate-y-1/2 right-3 top-1/2 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            {isLogin && (
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    className="mr-2 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-gray-600">Remember me</span>
+                </label>
+                <button
+                  type="button"
+                  className="font-medium text-blue-600 hover:text-blue-800"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full px-4 py-3 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              {isLogin ? "Sign In" : "Create Account"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
