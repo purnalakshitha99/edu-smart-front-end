@@ -1,7 +1,7 @@
-import React from "react";
-import { Bell, AlertCircle, Video, Mic, Phone } from "lucide-react";
+import React, { useEffect, useRef, useState } from 'react';
+import { Bell, AlertCircle, Video, Mic, Phone, VideoOff, MicOff } from 'lucide-react';
 
-const Card = ({ children, className }) => {
+const Card = ({ children, className }: { children: React.ReactNode; className?: string }) => {
   return (
     <div className={`bg-white rounded-lg shadow-md ${className}`}>
       {children}
@@ -9,7 +9,7 @@ const Card = ({ children, className }) => {
   );
 };
 
-const CardContent = ({ children, className }) => {
+const CardContent = ({ children, className }: { children: React.ReactNode; className?: string }) => {
   return (
     <div className={`p-4 ${className}`}>
       {children}
@@ -18,24 +18,111 @@ const CardContent = ({ children, className }) => {
 };
 
 const ClassRoom = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isVideoOn, setIsVideoOn] = useState(true);
+  const [isAudioOn, setIsAudioOn] = useState(true);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+
+  const startCamera = async () => {
+    try {
+      // Stop any existing stream first
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+      });
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+      setStream(mediaStream);
+
+      setIsVideoOn(true);  //set default value true
+      setIsAudioOn(true);  //set default value true
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+    }
+  };
+
+  useEffect(() => {
+    startCamera();
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  const toggleVideo = () => {
+    if (stream) {
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setIsVideoOn(videoTrack.enabled);
+      }
+    }
+  };
+
+  const toggleAudio = () => {
+    if (stream) {
+      const audioTrack = stream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsAudioOn(audioTrack.enabled);
+      }
+    }
+  };
+
+  const endCall = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => {
+        track.stop();
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      setStream(null);
+      setIsVideoOn(false);
+      setIsAudioOn(false);
+    }
+  };
+
   return (
     <div className="flex h-screen p-4 bg-blue-50">
       {/* Left Side - Online Classroom */}
       <div className="flex flex-col items-center flex-1 p-6 bg-white shadow-lg rounded-xl">
         <h2 className="mb-4 text-lg font-semibold">Matching Learning Class</h2>
-        <div className="relative w-full max-w-lg overflow-hidden bg-gray-200 rounded-lg h-96">
-          {/* Using placeholder images since real paths won't work */}
-          <img src="/api/placeholder/800/600" alt="Teacher" className="object-cover w-full h-full" />
-          <div className="absolute space-y-2 top-4 right-4">
-            <img src="/api/placeholder/48/48" alt="Student 1" className="w-12 h-12 border-2 border-white rounded-full" />
-            <img src="/api/placeholder/48/48" alt="Student 2" className="w-12 h-12 border-2 border-white rounded-full" />
-            <img src="/api/placeholder/48/48" alt="Student 3" className="w-12 h-12 border-2 border-white rounded-full" />
+        <div className="relative w-full max-w-4xl overflow-hidden bg-gray-900 rounded-lg aspect-video">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="object-cover w-full h-full"
+            muted // Add muted attribute
+          />
+          <div className="absolute flex items-center px-6 py-3 space-x-4 transform -translate-x-1/2 rounded-full bottom-4 left-1/2 bg-gray-800/60">
+            <button
+              onClick={toggleAudio}
+              className={`p-3 rounded-full ${isAudioOn ? 'bg-blue-500 hover:bg-blue-600' : 'bg-red-500 hover:bg-red-600'}`}
+            >
+              {isAudioOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
+            </button>
+            <button
+              onClick={toggleVideo}
+              className={`p-3 rounded-full ${isVideoOn ? 'bg-blue-500 hover:bg-blue-600' : 'bg-red-500 hover:bg-red-600'}`}
+            >
+              {isVideoOn ? <Video className="w-5 h-5 text-white" /> : <VideoOff className="w-5 h-5 text-white" />}
+            </button>
+            <button
+              onClick={endCall}
+              className="p-3 bg-red-500 rounded-full hover:bg-red-600"
+            >
+              <Phone className="w-5 h-5 text-white" />
+            </button>
           </div>
-        </div>
-        <div className="flex mt-4 space-x-4">
-          <button className="p-3 text-white bg-red-500 rounded-full"><Phone /></button>
-          <button className="p-3 text-white bg-blue-500 rounded-full"><Video /></button>
-          <button className="p-3 text-white bg-green-500 rounded-full"><Mic /></button>
         </div>
       </div>
 
