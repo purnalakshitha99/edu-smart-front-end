@@ -1,52 +1,54 @@
-import React, { useState, FormEvent } from "react";  // Import FormEvent
+import React, { useState, FormEvent, useRef } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import login from "../assets/login.jpeg";
-import register from "../assets/register.jpeg";
-import axios, { AxiosError } from "axios"; // Import Axios and AxiosError
 import { Eye, EyeOff } from "lucide-react";
+import axios, { AxiosError } from "axios";
 
 function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true); // Start with login form showing
+  const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [email, setEmail] = useState(""); // Add email state
+  const [email, setEmail] = useState("");
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const backendURL = "http://127.0.0.1:5000"; // IMPORTANT: Set your backend URL
+  const backendURL = "http://127.0.0.1:5000";
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post(`${backendURL}/auth/register`, {
-        username: username,
-        password: password,
-        email: email, //send the email to the backend as well.
-        role: "student", // set default value to User
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("password", password);
+      formData.append("email", email);
+      formData.append("role", "student");
+      if (profilePicture) {
+        formData.append("profile_picture", profilePicture);
+      }
+
+      const response = await axios.post(`${backendURL}/auth/register`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       if (response.status === 201) {
         alert("Registration successful!");
-        setIsLogin(true); // Switch to login form after successful registration
+        setIsLogin(true);
       } else {
         alert("Registration failed: " + response.data.message);
       }
     } catch (error) {
       console.error("Registration error:", error);
 
-      let errorMessage = "Registration failed: An unknown error occurred."; // Default message
+      let errorMessage = "Registration failed: An unknown error occurred.";
 
       if (axios.isAxiosError(error)) {
-        // Axios-specific error
         const axiosError = error as AxiosError;
-
-        // Safely access the message property
         const data = axiosError.response?.data as { message?: string } | undefined;
         errorMessage = `Registration failed: ${data?.message || axiosError.message}`;
-
       } else if (error instanceof Error) {
-        // JavaScript Error
         errorMessage = `Registration failed: ${error.message}`;
       } else {
-        // Unexpected error
         errorMessage = "Registration failed: An unexpected error occurred.";
       }
 
@@ -63,30 +65,25 @@ function AuthPage() {
 
       if (response.status === 200) {
         const token = response.data.access_token;
-        localStorage.setItem("token", token); // Store the token (e.g., in localStorage)
+        localStorage.setItem("token", token);
         alert("Login successful!");
-        // Redirect to a protected page or update UI accordingly
+        // Redirect to a protected page or update UI accordingly (replace with your actual redirection logic)
+        window.location.href = "/dashboard"; // Example: Redirect to /dashboard
       } else {
         alert("Login failed: " + response.data.message);
       }
     } catch (error) {
       console.error("Login error:", error);
 
-      let errorMessage = "Login failed: An unknown error occurred."; // Default message
+      let errorMessage = "Login failed: An unknown error occurred.";
 
       if (axios.isAxiosError(error)) {
-        // Axios-specific error
         const axiosError = error as AxiosError;
-
-        // Safely access the message property
         const data = axiosError.response?.data as { message?: string } | undefined;
         errorMessage = `Login failed: ${data?.message || axiosError.message}`;
-
       } else if (error instanceof Error) {
-        // JavaScript Error
         errorMessage = `Login failed: ${error.message}`;
       } else {
-        // Unexpected error
         errorMessage = "Login failed: An unexpected error occurred.";
       }
 
@@ -94,7 +91,7 @@ function AuthPage() {
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {  // Explicitly type the event
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (isLogin) {
       handleLogin();
@@ -103,7 +100,22 @@ function AuthPage() {
     }
   };
 
- return (
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setProfilePicture(e.target.files[0]);
+    } else {
+      setProfilePicture(null);
+    }
+  };
+
+  const handleRemovePicture = () => {
+    setProfilePicture(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  return (
     <div className="flex h-screen">
       <div className="relative hidden lg:flex lg:w-1/2">
         <img
@@ -162,17 +174,36 @@ function AuthPage() {
                     placeholder="Enter your email"
                   />
                 </div>
-                {/* <div>
+
+                <div>
                   <label className="block mb-2 text-sm font-medium text-gray-700">
-                    Role
+                    Profile Picture
                   </label>
                   <input
-                    type="text"
-                    value="Student"
-                    disabled
-                    className="w-full px-4 py-2 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePictureChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
+                    ref={fileInputRef}
                   />
-                </div> */}
+
+                  {profilePicture && (
+                    <div className="mt-2">
+                      <img
+                        src={URL.createObjectURL(profilePicture)}
+                        alt="Profile Preview"
+                        className="w-24 h-24 rounded-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemovePicture}
+                        className="mt-1 text-sm text-red-500 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             )}
 
