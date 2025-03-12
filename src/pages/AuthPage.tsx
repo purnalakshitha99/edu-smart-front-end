@@ -2,6 +2,7 @@ import React, { useState, FormEvent, useRef } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { Eye, EyeOff } from "lucide-react";
 import axios, { AxiosError } from "axios";
+import Swal from 'sweetalert2';  // Import SweetAlert2
 
 function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,6 +14,16 @@ function AuthPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const backendURL = "http://127.0.0.1:5000";
+
+  const clearFormFields = () => {
+    setUsername("");
+    setPassword("");
+    setEmail("");
+    setProfilePicture(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleRegister = async () => {
     try {
@@ -32,10 +43,19 @@ function AuthPage() {
       });
 
       if (response.status === 201) {
-        alert("Registration successful!");
+        Swal.fire({  // SweetAlert for successful registration
+          icon: 'success',
+          title: 'Registration Successful!',
+          text: 'You have successfully registered.',
+        });
         setIsLogin(true);
+        clearFormFields();  // Clear the form after successful registration
       } else {
-        alert("Registration failed: " + response.data.message);
+        Swal.fire({  // SweetAlert for registration failure
+          icon: 'error',
+          title: 'Registration Failed',
+          text: response.data.message,
+        });
       }
     } catch (error) {
       console.error("Registration error:", error);
@@ -52,7 +72,11 @@ function AuthPage() {
         errorMessage = "Registration failed: An unexpected error occurred.";
       }
 
-      alert(errorMessage);
+      Swal.fire({  // SweetAlert for registration error
+        icon: 'error',
+        title: 'Registration Error',
+        text: errorMessage,
+      });
     }
   };
 
@@ -66,11 +90,21 @@ function AuthPage() {
       if (response.status === 200) {
         const token = response.data.access_token;
         localStorage.setItem("token", token);
-        alert("Login successful!");
-        // Redirect to a protected page or update UI accordingly (replace with your actual redirection logic)
-        window.location.href = "/dashboard"; // Example: Redirect to /dashboard
+        Swal.fire({  // SweetAlert for successful login
+          icon: 'success',
+          title: 'Login Successful!',
+          text: 'You have successfully logged in.',
+        }).then(() => {
+          clearFormFields();
+          window.location.href = "/";  // Redirect after SweetAlert is closed
+        });
+
       } else {
-        alert("Login failed: " + response.data.message);
+        Swal.fire({  // SweetAlert for login failure
+          icon: 'error',
+          title: 'Login Failed',
+          text: response.data.message,
+        });
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -87,7 +121,11 @@ function AuthPage() {
         errorMessage = "Login failed: An unexpected error occurred.";
       }
 
-      alert(errorMessage);
+      Swal.fire({  // SweetAlert for login error
+        icon: 'error',
+        title: 'Login Error',
+        text: errorMessage,
+      });
     }
   };
 
