@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User } from 'lucide-react';
 
-const BlogCard = ({ title, image, views, navigateTo }: { title: string; image: string; views: string, navigateTo: 'class'|'exam' }) => {
+const BlogCard = ({ title, image, views, navigateTo }: { title: string; image: string; views: string, navigateTo: 'class'|'exams' }) => {
  const navigate = useNavigate();
   return(<div  className="overflow-hidden bg-white rounded-lg shadow-md" onClick={()=>navigate(navigateTo)}>
     <img src={image} alt={title} className="object-cover w-full h-48" />
@@ -32,7 +32,7 @@ const RelatedBlogs = () => {
             title="Exam"
             image="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1974&q=80"
             views="15,232"
-            navigateTo='exam'
+            navigateTo='exams'
           />
           <BlogCard 
             title="Classroom"
