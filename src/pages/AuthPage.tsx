@@ -85,6 +85,7 @@ function AuthPage() {
       const response = await axios.post(`${backendURL}/auth/login`, {
         username: username,
         password: password,
+        role: "student", //add this line
       });
 
       if (response.status === 200) {
