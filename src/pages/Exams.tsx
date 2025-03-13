@@ -160,7 +160,7 @@ const Exams: React.FC = () => {
     };
 
     return (
-        <div className="py-12">
+        <div className="py-12 min-h-screen ">
             <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <div className="mb-12 text-center">
                     <h1 className="mb-4 text-4xl font-bold text-gray-900">Available Exams</h1>
