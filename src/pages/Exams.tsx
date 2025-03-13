@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; 
+import axios from 'axios';
 
 interface Exam {
     id: string;
@@ -65,14 +65,66 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onStart }) => (
     </div>
 );
 
+interface ExamRestrictionsProps {
+    show: boolean;
+    onCancel: () => void;
+    onConfirm: () => void;
+}
+
+const ExamRestrictions: React.FC<ExamRestrictionsProps> = ({ show, onCancel, onConfirm }) => {
+    if (!show) return null;
+
+    return (
+        <div className="fixed top-0 left-0 flex items-center justify-center w-full h-full bg-gray-500 bg-opacity-75">
+            <div className="bg-white rounded-lg p-8 max-w-md w-full">
+                <h2 className="text-2xl font-semibold mb-4">Exam Restrictions</h2>
+                <p className="text-gray-700 mb-4">Please acknowledge the following restrictions before starting the exam:</p>
+                <ul className="list-disc list-inside mb-4">
+                    <li>No external websites or resources allowed.</li>
+                    <li>Do not use any unauthorized materials.</li>
+                    <li>Ensure your face is clearly visible on the webcam.</li>
+                    <li>Do not talk or communicate with others during the exam.</li>
+                </ul>
+                <div className="flex justify-end">
+                    <button
+                        onClick={onCancel}
+                        className="px-4 py-2 mr-2 text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                    >
+                        Start Exam
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const FullScreenLoader = ({ isLoading }: { isLoading: boolean }) => {
+    if (!isLoading) return null;
+
+    return (
+        <div className="fixed top-0 left-0 flex items-center justify-center w-full h-full bg-gray-100 bg-opacity-50 z-50">
+            <div className="text-3xl font-bold text-blue-600">
+                Loading...
+                <div className="inline-block w-8 h-8 ml-4 border-4 border-t-blue-700 rounded-full animate-spin"></div>
+            </div>
+        </div>
+    );
+};
+
 const Exams: React.FC = () => {
     const navigate = useNavigate();
     const [showWarning, setShowWarning] = useState(false);
     const [showRestrictions, setShowRestrictions] = useState(false);
     const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false); // Loading state එක
 
     const handleStartExam = (examId: string) => {
-        // Check if browser supports getUserMedia
         if (!navigator.mediaDevices?.getUserMedia) {
             setShowWarning(true);
             return;
@@ -82,21 +134,24 @@ const Exams: React.FC = () => {
         setShowRestrictions(true);
     };
 
-    const handleConfirmStart = async () => {
+    const handleConfirmStart = () => {
         setShowRestrictions(false);
-        try {
-            
-            const response = await axios.get('http://localhost:5000/ethical_benchmark');
-
-         
-            console.log("Ethical benchmark response:", response.data);
-
-            
+        setIsLoading(true); // Loading state එක true කරන්න
+    
+        // තත්පර 3ක delay එකක් දෙන්න
+        setTimeout(() => {
             navigate(`/exam/${selectedExamId}`);
-        } catch (error) {
-            console.error("Failed to start ethical benchmark:", error);
-            
-        }
+            setIsLoading(false); // Loading state එක false කරන්න
+        }, 3000); // 3000 milliseconds = 3 seconds
+    
+        axios.get('http://localhost:5000/ethical_benchmark')
+            .then(() => {
+                // Optional: Do something after ethical benchmark
+            })
+            .catch(error => {
+                console.error("Failed to start ethical benchmark:", error);
+                // Optional: Handle error
+            });
     };
 
     const handleCancelStart = () => {
@@ -132,35 +187,13 @@ const Exams: React.FC = () => {
                 </div>
             </div>
 
-            {/* Exam Restrictions Popup */}
-            {showRestrictions && (
-                <div className="fixed top-0 left-0 flex items-center justify-center w-full h-full bg-gray-500 bg-opacity-75">
-                    <div className="bg-white rounded-lg p-8 max-w-md w-full">
-                        <h2 className="text-2xl font-semibold mb-4">Exam Restrictions</h2>
-                        <p className="text-gray-700 mb-4">Please acknowledge the following restrictions before starting the exam:</p>
-                        <ul className="list-disc list-inside mb-4">
-                            <li>No external websites or resources allowed.</li>
-                            <li>Do not use any unauthorized materials.</li>
-                            <li>Ensure your face is clearly visible on the webcam.</li>
-                            <li>Do not talk or communicate with others during the exam.</li>
-                        </ul>
-                        <div className="flex justify-end">
-                            <button
-                                onClick={handleCancelStart}
-                                className="px-4 py-2 mr-2 text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleConfirmStart}
-                                className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                            >
-                                Start Exam
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ExamRestrictions
+                show={showRestrictions}
+                onCancel={handleCancelStart}
+                onConfirm={handleConfirmStart}
+            />
+
+            <FullScreenLoader isLoading={isLoading} />
         </div>
     );
 };
