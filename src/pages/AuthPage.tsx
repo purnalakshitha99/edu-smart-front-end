@@ -85,7 +85,7 @@ function AuthPage() {
         }
     };
 
-    const handleLogin = async () => {
+    const handleLogin = async () => {``
         setIsLoading(true); // Start loading
         try {
             const response = await axios.post(`${backendURL}/auth/login`, {
@@ -94,9 +94,18 @@ function AuthPage() {
                 role: "student", //add this line
             });
 
+            console.log(response)
+
             if (response.status === 200) {
                 const token = response.data.access_token;
+                const userid = response.data.user_id;
+                const imageurl = response.data.image;
+                
                 localStorage.setItem("token", token);
+                localStorage.setItem("userid",userid)
+                localStorage.setItem("imageurl",imageurl)
+
+                // localStorage.setItem("id", );
                 Swal.fire({  // SweetAlert for successful login
                     icon: 'success',
                     title: 'Login Successful!',
