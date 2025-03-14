@@ -134,25 +134,48 @@ const Exams: React.FC = () => {
         setShowRestrictions(true);
     };
 
+    // const handleConfirmStart = () => {
+    //     setShowRestrictions(false);
+    //     setIsLoading(true); // Loading state එක true කරන්න
+    
+    //     // තත්පර 3ක delay එකක් දෙන්න
+    //     setTimeout(() => {
+    //         navigate(`/exam/${selectedExamId}`);
+    //         setIsLoading(false); // Loading state එක false කරන්න
+    //     }, 3000); // 3000 milliseconds = 3 seconds
+    
+    //     axios.get('http://localhost:5000/ethical_benchmark')
+    //         .then(() => {
+    //             // Optional: Do something after ethical benchmark
+    //         })
+    //         .catch(error => {
+    //             console.error("Failed to start ethical benchmark:", error);
+    //             // Optional: Handle error
+    //         });
+    // };
+
     const handleConfirmStart = () => {
         setShowRestrictions(false);
-        setIsLoading(true); // Loading state එක true කරන්න
+        setIsLoading(true);
     
-        // තත්පර 3ක delay එකක් දෙන්න
         setTimeout(() => {
             navigate(`/exam/${selectedExamId}`);
-            setIsLoading(false); // Loading state එක false කරන්න
-        }, 3000); // 3000 milliseconds = 3 seconds
+            setIsLoading(false);
+        }, 3000);
     
-        axios.get('http://localhost:5000/ethical_benchmark')
-            .then(() => {
-                // Optional: Do something after ethical benchmark
-            })
-            .catch(error => {
-                console.error("Failed to start ethical benchmark:", error);
-                // Optional: Handle error
-            });
+        const userid = localStorage.getItem("userid"); // Get userId from localStorage
+    
+        axios.get('http://localhost:5000/ethical_benchmark', {
+            params: { userid } // Send userId as a query parameter
+        })
+        .then(() => {
+            // Optional: Handle success
+        })
+        .catch(error => {
+            console.error("Failed to start ethical benchmark:", error);
+        });
     };
+
 
     const handleCancelStart = () => {
         setShowRestrictions(false);
