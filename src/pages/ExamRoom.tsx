@@ -77,7 +77,7 @@ const ExamRoom = () => {
           </div>
 
           {/* Webcam feed only */}
-          <div className="space-y-4 lg:col-span-1">
+          {/* <div className="space-y-4 lg:col-span-1">
             <div className="p-4 bg-white rounded-lg shadow-md">
               <Webcam
                 ref={webcamRef}
@@ -93,7 +93,7 @@ const ExamRoom = () => {
               />
               <p className="mt-2 text-sm text-center text-gray-500">Webcam feed (no face detection)</p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
