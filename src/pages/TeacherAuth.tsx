@@ -10,17 +10,24 @@ export function TeacherAuth() {
     const [password, setPassword] = useState("");
     const [email, setEmail] = useState("");
     const [teacherId, setTeacherId] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const backendURL = "http://127.0.0.1:5000";
 
     const handleRegister = async () => {
+        setIsLoading(true);
         try {
-            const response = await axios.post(`${backendURL}/auth/register`, {
-                username,
-                password,
-                email,
-                role: "teacher",
-                teacherId,
+            const formData = new FormData();
+            formData.append("username", username);
+            formData.append("password", password);
+            formData.append("email", email);
+            formData.append("role", "teacher");
+            formData.append("teacherId", teacherId);  // Include teacherId
+
+            const response = await axios.post(`${backendURL}/auth/register`, formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
             });
 
             if (response.status === 201) {
@@ -30,8 +37,12 @@ export function TeacherAuth() {
                     text: 'You have successfully registered.',
                 }).then(() => {
                     setIsLogin(true);
+                    // Optionally clear the form fields here
+                    setUsername("");
+                    setPassword("");
+                    setEmail("");
+                    setTeacherId("");
                 });
-
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -40,6 +51,7 @@ export function TeacherAuth() {
                 });
             }
         } catch (error) {
+            console.error("Registration error:", error);
             let errorMessage = "Registration failed: An unknown error occurred.";
             if (axios.isAxiosError(error)) {
                 const axiosError = error as AxiosError;
@@ -51,15 +63,18 @@ export function TeacherAuth() {
                 title: 'Registration Error',
                 text: errorMessage,
             });
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const handleLogin = async () => {
+        setIsLoading(true);
         try {
             const response = await axios.post(`${backendURL}/auth/login`, {
                 username,
                 password,
-                role: "teacher", //add this line
+                role: "teacher",
             });
 
             if (response.status === 200) {
@@ -81,6 +96,7 @@ export function TeacherAuth() {
                 });
             }
         } catch (error) {
+            console.error("Login error:", error);
             let errorMessage = "Login failed: An unknown error occurred.";
             if (axios.isAxiosError(error)) {
                 const axiosError = error as AxiosError;
@@ -92,6 +108,8 @@ export function TeacherAuth() {
                 title: 'Login Error',
                 text: errorMessage,
             });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -246,8 +264,9 @@ export function TeacherAuth() {
                         <button
                             type="submit"
                             className="w-full px-4 py-3 font-medium text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                            disabled={isLoading}
                         >
-                            {isLogin ? "Sign In" : "Create Account"}
+                            {isLoading ? "Loading..." : (isLogin ? "Sign In" : "Create Account")}
                         </button>
                     </form>
                 </div>
