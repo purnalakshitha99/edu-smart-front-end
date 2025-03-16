@@ -100,10 +100,12 @@ function AuthPage() {
                 const token = response.data.access_token;
                 const userid = response.data.user_id;
                 const imageurl = response.data.image;
+                const username = response.data.username; 
                 
                 localStorage.setItem("token", token);
                 localStorage.setItem("userid",userid)
-                localStorage.setItem("imageurl",imageurl)
+                localStorage.setItem("imageurl", imageurl)
+                localStorage.setItem("username", username);
 
                 // localStorage.setItem("id", );
                 Swal.fire({  // SweetAlert for successful login
