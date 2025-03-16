@@ -1,4 +1,4 @@
-import React, { useState, FormEvent, useRef } from "react";
+import React, {useEffect, useState, FormEvent, useRef } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { Eye, EyeOff } from "lucide-react";
 import axios, { AxiosError } from "axios";
@@ -85,6 +85,22 @@ function AuthPage() {
         }
     };
 
+        useEffect(() => {
+        // Initialize username from localStorage and listen for changes
+        const initialUsername = localStorage.getItem("username") || "";
+        setUsername(initialUsername);
+
+        const handleStorageChange = () => {
+            setUsername(localStorage.getItem("username") || "");
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []); 
+
     const handleLogin = async () => {``
         setIsLoading(true); // Start loading
         try {
@@ -100,12 +116,20 @@ function AuthPage() {
                 const token = response.data.access_token;
                 const userid = response.data.user_id;
                 const imageurl = response.data.image;
-                const username = response.data.username; 
+               const fetchedUsername = response.data.username; 
                 
                 localStorage.setItem("token", token);
                 localStorage.setItem("userid",userid)
                 localStorage.setItem("imageurl", imageurl)
-                localStorage.setItem("username", username);
+                
+                
+                if (fetchedUsername) { // Check if username is defined
+                    localStorage.setItem("username", fetchedUsername);
+                } else {
+                    console.warn("Username is undefined in the response.");
+                    localStorage.removeItem("username")
+                }
+
 
                 // localStorage.setItem("id", );
                 Swal.fire({  // SweetAlert for successful login
