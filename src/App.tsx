@@ -16,6 +16,10 @@ import Navbar from './components/Navbar';
 import { TeacherAuth } from './pages/TeacherAuth';
 import { RoleSelection } from './pages/RoleSelection';
 import EthicalReportPage from './pages/EthicalReportPage';
+import TeachersHomePage from './pages/TeachersHomePage';
+import TeacherDashBord from './pages/TeacherDashBord';
+
+
 import ProfilePage from './pages/ProfilePage';
 
 function App() {
@@ -37,7 +41,10 @@ function App() {
           <Route path="/login" element={<AuthPage />} />
           <Route path="/exam/:examId" element={<><Navbar /><ExamRoom /><Footer /></>} />
           <Route path='/roleselection' element={<RoleSelection/>}/>
-          <Route path='/ethicalReport' element={<EthicalReportPage/>}/>
+          <Route path='/ethicalReport' element={<EthicalReportPage />} />
+          <Route path='/teacherdashbord' element={<TeacherAuth />} />
+          <Route path='/teacherhomepage' element={<TeachersHomePage />} />
+          <Route path='/teacherdashbord' element={<TeacherDashBord />} />
           <Route path="/profile" element={<ProfilePage />} />
 
         </Routes>
