@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Bell, AlertCircle, Video, Mic, Phone, VideoOff, MicOff } from 'lucide-react';
+import axios from 'axios';
 
 const Card = ({ children, className }: { children: React.ReactNode; className?: string }) => {
     return (
@@ -17,54 +18,72 @@ const CardContent = ({ children, className }: { children: React.ReactNode; class
     );
 };
 
+interface DrowsinessResponse {
+    processed_frame: string;
+    warnings: string[];
+    error?: string;
+}
+
+interface EmotionResponse {
+    processed_frame: string;
+    emotion: string | null;
+    updated_database?: boolean;
+    error?: string;
+}
+
 const ClassRoom = () => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isVideoOn, setIsVideoOn] = useState(true);
     const [isAudioOn, setIsAudioOn] = useState(true);
     const [stream, setStream] = useState<MediaStream | null>(null);
     const [warnings, setWarnings] = useState<string[]>([]);
+    const [emotion, setEmotion] = useState<string | null>(null);
     const [alertSound, setAlertSound] = useState<HTMLAudioElement | null>(null);
     const [isSendingFrame, setIsSendingFrame] = useState(false);
     const [frameCount, setFrameCount] = useState(0);
     const [processedImage, setProcessedImage] = useState<string | null>(null);
-    const studentId = "student123"; // Replace with a dynamic student ID if needed
     const [socketConnected, setSocketConnected] = useState<boolean>(false);
     const [cameraError, setCameraError] = useState<string | null>(null);
     const frameIntervalRef = useRef<number | null>(null);
     const [isCameraReady, setIsCameraReady] = useState(false);
 
+    // Get user information from localStorage
+    const [token, setToken] = useState(localStorage.getItem("token"));
+    const [userId, setUserId] = useState(localStorage.getItem("userid"));
+    const [userImage, setUserImage] = useState(localStorage.getItem("imageurl"));
+
+    const drowsinessApiUrl = 'http://localhost:5001/api/process_frame';
+    const emotionApiUrl = 'http://localhost:5003/api/process_frame';
+
     // Initialize beep sound
     useEffect(() => {
-        console.log("Initializing alert sound...");
-        const audio = new Audio('/beep.mp3'); // Ensure the beep file exists in your public folder
-        audio.volume = 0.5; // Set volume to 50%
-
-        // Pre-load the sound
-        audio.load();
-        audio.oncanplaythrough = () => {
-            console.log("Alert sound loaded successfully");
-            setAlertSound(audio);
-        };
-
-        audio.onerror = (e) => {
-            console.error("Error loading alert sound:", e);
-        };
+        const beep = new Audio('beep.mp3');
+        beep.volume = 0.5;
+        setAlertSound(beep);
 
         return () => {
-            audio.pause();
-            audio.currentTime = 0;
+            beep.pause();
         };
     }, []);
+
+    // Check if user is logged in
+    useEffect(() => {
+        if (!token || !userId) {
+            // Redirect to login if not authenticated
+            window.location.href = "/auth";
+        }
+    }, [token, userId]);
 
     // Start camera when component mounts
     useEffect(() => {
         startCamera();
 
-        // Cleanup function to stop camera when component unmounts
         return () => {
+            // Clean up when component unmounts
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
+
             if (frameIntervalRef.current) {
                 clearInterval(frameIntervalRef.current);
             }
@@ -74,21 +93,17 @@ const ClassRoom = () => {
     // Set up frame sending interval after camera starts
     useEffect(() => {
         if (stream && isVideoOn && isCameraReady) {
-            // Clear any existing interval
             if (frameIntervalRef.current) {
                 clearInterval(frameIntervalRef.current);
             }
 
-            // Set new interval to send frames
             const intervalId = setInterval(() => {
                 if (videoRef.current) {
                     sendFrame(videoRef.current);
                 }
-            }, 1000); // Send frame every second
+            }, 1000);
 
             frameIntervalRef.current = intervalId;
-
-            // Update socket connection status
             setSocketConnected(true);
 
             return () => {
@@ -101,57 +116,62 @@ const ClassRoom = () => {
 
     const startCamera = async () => {
         try {
-            console.log("Starting camera...");
             setCameraError(null);
-
-            // Stop any existing stream first
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
-
             const mediaStream = await navigator.mediaDevices.getUserMedia({
                 video: true,
-                audio: true
+                audio: isAudioOn
             });
 
             if (videoRef.current) {
                 videoRef.current.srcObject = mediaStream;
-                console.log("Video element source set");
-            }
-            setStream(mediaStream);
 
-            // Wait for video to be ready
-            if (videoRef.current) {
+                // Add an event listener to confirm when video is actually playing
                 videoRef.current.onloadedmetadata = () => {
-                    console.log("Video metadata loaded, starting playback");
-                    videoRef.current?.play().catch(e => {
-                        console.error("Error playing video:", e);
-                        setCameraError("Failed to play video stream");
-                    });
-                    setIsCameraReady(true);
+                    videoRef.current?.play()
+                        .then(() => {
+                            console.log("Camera started successfully");
+                            setIsCameraReady(true);
+                        })
+                        .catch(err => {
+                            console.error("Error playing video:", err);
+                            setCameraError("Could not play video stream. Please check permissions.");
+                        });
                 };
             }
 
-            setIsVideoOn(true);
-            setIsAudioOn(true);
-
-            console.log("Camera started successfully");
+            setStream(mediaStream);
         } catch (err) {
             console.error("Error accessing camera:", err);
-            setCameraError(`Failed to access camera: ${err instanceof Error ? err.message : String(err)}`);
-            setIsVideoOn(false);
+            let errorMessage = "Failed to access camera. ";
+
+            if (err instanceof DOMException) {
+                if (err.name === 'NotAllowedError') {
+                    errorMessage += "Camera access was denied. Please check your browser permissions.";
+                } else if (err.name === 'NotFoundError') {
+                    errorMessage += "No camera device found. Please connect a camera.";
+                } else if (err.name === 'NotReadableError') {
+                    errorMessage += "Camera is already in use by another application.";
+                } else {
+                    errorMessage += `Error: ${err.message}`;
+                }
+            } else {
+                errorMessage += "Unknown error occurred.";
+            }
+
+            setCameraError(errorMessage);
         }
     };
 
-    // Function to send frame to backend
-    async function sendFrame(frame: HTMLVideoElement) {
+    const sendFrame = async (frame: HTMLVideoElement) => {
+        // Don't send if we're already sending or if user is not authenticated
+        if (isSendingFrame || !token || !userId) return;
+
         try {
             setIsSendingFrame(true);
 
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
 
-            // Check if the video is ready and has dimensions
             if (frame.videoWidth === 0 || frame.videoHeight === 0) {
                 console.log("Video not ready yet, skipping frame");
                 setIsSendingFrame(false);
@@ -163,9 +183,8 @@ const ClassRoom = () => {
 
             ctx?.drawImage(frame, 0, 0, canvas.width, canvas.height);
 
-            // Convert canvas to base64
             const base64Image = canvas.toDataURL('image/jpeg');
-            const base64Data = base64Image.split(',')[1]; // Extract only the base64 part
+            const base64Data = base64Image.split(',')[1];
 
             if (!base64Data) {
                 console.error("Failed to capture frame as base64");
@@ -173,185 +192,198 @@ const ClassRoom = () => {
                 return;
             }
 
+            // Include the student_id (user ID) in the request data
             const data = {
                 frame: base64Data,
-                student_id: studentId,
+                student_id: userId,
+                username: localStorage.getItem("username")
             };
 
-            // Send frame to the backend using fetch - make sure this URL matches your backend
-            const response = await fetch('http://localhost:5000/api/process_frame', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            });
+            // Send frame to both backends concurrently
+            const [drowsinessResponse, emotionResponse] = await Promise.all([
+                axios.post<DrowsinessResponse>(drowsinessApiUrl, data, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                }),
+                axios.post<EmotionResponse>(emotionApiUrl, data, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                }),
+            ]);
 
-            if (response.ok) {
-                const result = await response.json();
-                setProcessedImage(result.processed_frame);
-                setSocketConnected(true);
+            // Process drowsiness response
+            if (drowsinessResponse.status === 200) {
+                const drowsinessResult = drowsinessResponse.data;
+                setProcessedImage(drowsinessResult.processed_frame);
 
-                if (result.warnings && result.warnings.length > 0) {
-                    // Only add meaningful warnings (not "No Warning")
-                    const significantWarnings = result.warnings.filter((warning: string) =>
-                        warning !== "No Warning");
+                if (drowsinessResult.warnings && drowsinessResult.warnings.length > 0) {
+                    const significantWarnings = drowsinessResult.warnings.filter(
+                        (warning: string) => warning !== "No Warning"
+                    );
 
                     if (significantWarnings.length > 0) {
-                        setWarnings(prev => [...prev, ...significantWarnings]);
-                        // Only play sound for actual warnings
+                        setWarnings(prev => {
+                            // Limit warnings to the most recent 10
+                            const newWarnings = [...prev, ...significantWarnings];
+                            return newWarnings.slice(-10);
+                        });
                         alertSound?.play();
                     }
                 }
-
-                // Increment frame counter for monitoring
-                setFrameCount(prev => prev + 1);
             } else {
-                console.error("Error processing frame:", await response.text());
-                setSocketConnected(false);
+                console.error("Error processing drowsiness:", drowsinessResponse.statusText);
             }
-        } catch (error) {
+
+            // Process emotion response
+            if (emotionResponse.status === 200) {
+                const emotionResult = emotionResponse.data;
+                setEmotion(emotionResult.emotion);
+
+                if (emotionResult.updated_database) {
+                    console.log("Emotion data saved to database");
+                }
+            } else {
+                console.error("Error processing emotion:", emotionResponse.statusText);
+            }
+
+            setFrameCount((prev) => prev + 1);
+            setSocketConnected(true); // If both are successful, consider connected
+
+        } catch (error: any) {
             console.error("Error sending frame:", error);
             setSocketConnected(false);
-            setCameraError("Connection to detection server lost. Please reconnect.");
+            if (error.response && error.response.status === 401) {
+                // Token expired or invalid
+                setCameraError("Authentication expired. Please log in again.");
+                localStorage.removeItem("token");
+                setTimeout(() => {
+                    window.location.href = "/auth";
+                }, 2000);
+            } else {
+                setCameraError("Connection to detection server lost. Please reconnect.");
+            }
         } finally {
             setIsSendingFrame(false);
         }
-    }
+    };
 
     const toggleVideo = () => {
         if (stream) {
-            const videoTrack = stream.getVideoTracks()[0];
-            if (videoTrack) {
-                videoTrack.enabled = !videoTrack.enabled;
-                setIsVideoOn(videoTrack.enabled);
-            }
+            const videoTracks = stream.getVideoTracks();
+            videoTracks.forEach(track => {
+                track.enabled = !isVideoOn;
+            });
+            setIsVideoOn(!isVideoOn);
         }
     };
 
     const toggleAudio = () => {
         if (stream) {
-            const audioTrack = stream.getAudioTracks()[0];
-            if (audioTrack) {
-                audioTrack.enabled = !audioTrack.enabled;
-                setIsAudioOn(audioTrack.enabled);
-            }
+            const audioTracks = stream.getAudioTracks();
+            audioTracks.forEach(track => {
+                track.enabled = !isAudioOn;
+            });
+            setIsAudioOn(!isAudioOn);
         }
     };
 
     const endCall = () => {
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
-            if (videoRef.current) {
-                videoRef.current.srcObject = null;
-            }
-            setStream(null);
-            setIsVideoOn(false);
-            setIsAudioOn(false);
-            if (frameIntervalRef.current) {
-                clearInterval(frameIntervalRef.current);
-                frameIntervalRef.current = null;
-            }
-            setSocketConnected(false);
         }
+        setStream(null);
+        window.location.href = "/dashboard"; // Redirect to dashboard after ending call
     };
 
     const clearWarnings = () => {
-        setWarnings([]);  // Clears the warning messages on the frontend
+        setWarnings([]);
     };
 
     const handleReconnect = () => {
-        console.log("Attempting to reconnect...");
-        // Stop current stream
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-        }
-
-        // Reset states
-        setWarnings([]);
-        setSocketConnected(false);
-
-        // Delay before reconnecting
-        setTimeout(() => {
-            // Restart camera and socket connection
-            startCamera();
-        }, 1000);
+        endCall();
+        startCamera();
     };
-
 
     return (
         <div className="flex h-screen p-4 bg-blue-50">
             <div className="flex flex-col items-center flex-1 p-6 bg-white shadow-lg rounded-xl">
                 <h2 className="mb-4 text-lg font-semibold">Matching Learning Class</h2>
                 <div className="relative w-full max-w-4xl overflow-hidden bg-gray-900 rounded-lg aspect-video">
-                    {cameraError ? (
-                        <div className="flex flex-col items-center justify-center w-full h-full text-white">
-                            <AlertCircle className="w-12 h-12 mb-2 text-red-500" />
-                            <p className="text-center">{cameraError}</p>
+                    {cameraError && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-white bg-black bg-opacity-80">
+                            <AlertCircle size={40} className="mb-2 text-red-500" />
+                            <p className="mb-4 text-center">{cameraError}</p>
                             <button
-                                onClick={startCamera}
-                                className="px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-blue-600"
+                                className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+                                onClick={handleReconnect}
                             >
                                 Retry Camera Access
                             </button>
                         </div>
-                    ) : (
-                        <video
-                            ref={videoRef}
-                            autoPlay
-                            playsInline
-                            className="object-cover w-full h-full"
-                            muted
-                        />
                     )}
-                    <div className="absolute flex items-center px-6 py-3 space-x-4 transform -translate-x-1/2 rounded-full bottom-4 left-1/2 bg-gray-800/60">
+                    <video
+                        ref={videoRef}
+                        className="object-cover w-full h-full"
+                        autoPlay
+                        playsInline
+                        muted={!isAudioOn}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center p-4 space-x-4 bg-black bg-opacity-50">
                         <button
-                            onClick={toggleAudio}
-                            className={`p-3 rounded-full ${isAudioOn ? 'bg-blue-500 hover:bg-blue-600' : 'bg-red-500 hover:bg-red-600'}`}
-                        >
-                            {isAudioOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
-                        </button>
-                        <button
+                            className={`p-3 rounded-full ${isVideoOn ? 'bg-blue-500' : 'bg-red-500'}`}
                             onClick={toggleVideo}
-                            className={`p-3 rounded-full ${isVideoOn ? 'bg-blue-500 hover:bg-blue-600' : 'bg-red-500 hover:bg-red-600'}`}
                         >
-                            {isVideoOn ? <Video className="w-5 h-5 text-white" /> : <VideoOff className="w-5 h-5 text-white" />}
+                            {isVideoOn ? <Video size={20} color="white" /> : <VideoOff size={20} color="white" />}
                         </button>
                         <button
-                            onClick={endCall}
-                            className="p-3 bg-red-500 rounded-full hover:bg-red-600"
+                            className={`p-3 rounded-full ${isAudioOn ? 'bg-blue-500' : 'bg-red-500'}`}
+                            onClick={toggleAudio}
                         >
-                            <Phone className="w-5 h-5 text-white" />
+                            {isAudioOn ? <Mic size={20} color="white" /> : <MicOff size={20} color="white" />}
+                        </button>
+                        <button className="p-3 bg-red-500 rounded-full" onClick={endCall}>
+                            <Phone size={20} color="white" />
                         </button>
                     </div>
-                    <div className={`absolute top-4 right-4 px-3 py-1 rounded-full ${socketConnected ? 'bg-green-500' : 'bg-red-500'}`}>
-                        <span className="text-xs font-medium text-white">
+                    <div className="absolute top-4 left-4">
+                        <div className={`flex items-center px-2 py-1 text-sm ${socketConnected ? 'bg-green-500' : 'bg-red-500'} text-white rounded-md`}>
                             {socketConnected ? 'Connected' : 'Disconnected'}
-                        </span>
-                        {!socketConnected && (
-                            <button
-                                onClick={handleReconnect}
-                                className="px-2 py-1 ml-2 text-xs text-white bg-blue-500 rounded hover:bg-blue-600"
-                            >
-                                Reconnect
-                            </button>
-                        )}
+                        </div>
                     </div>
                 </div>
+                {emotion && (
+                    <div className="mt-4 text-lg font-semibold">
+                        Detected Emotion: {emotion}
+                    </div>
+                )}
             </div>
 
             <div className="flex flex-col w-1/3 ml-4 space-y-4">
-                <Card>
+                {/* Removing the Notifications Card */}
+                {/* <Card>
                     <CardContent>
                         <h3 className="mb-2 font-semibold text-md">Notifications</h3>
-                        <div className="flex items-center p-2 space-x-2 bg-gray-100 rounded-lg">
-                            <Bell className="text-blue-500" />
-                            <span>New lesson available: 'Illustrator Basics'</span>
-                        </div>
-                        <div className="flex items-center p-2 mt-2 space-x-2 bg-gray-100 rounded-lg">
-                            <Bell className="text-blue-500" />
-                            <span>Quiz deadline extended</span>
+                        <div className="p-4 space-y-2 text-sm bg-gray-100 rounded">
+                            <div className="flex items-center space-x-2">
+                                <Bell size={16} />
+                                <span>Frame count: {frameCount}</span>
+                            </div>
+                            {processedImage && (
+                                <div className="mt-2">
+                                    <img
+                                        src={`data:image/jpeg;base64,${processedImage}`}
+                                        alt="Processed frame"
+                                        className="w-full rounded"
+                                    />
+                                </div>
+                            )}
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
 
                 <Card>
                     <CardContent className="relative">
@@ -359,23 +391,25 @@ const ClassRoom = () => {
                             <h3 className="font-semibold text-md">Warnings</h3>
                             {warnings.length > 0 && (
                                 <button
+                                    className="text-xs text-blue-500 hover:text-blue-700"
                                     onClick={clearWarnings}
-                                    className="px-2 py-1 text-xs text-white bg-red-500 rounded hover:bg-red-600"
                                 >
-                                    Clear All
+                                    Clear all
                                 </button>
                             )}
                         </div>
-                        {warnings.length > 0 ? (
-                            warnings.map((warning, index) => (
-                                <div key={index} className="flex items-center p-2 mt-2 space-x-2 text-red-600 bg-red-100 rounded-lg">
-                                    <AlertCircle />
-                                    <span>{warning}</span>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="p-2 text-center text-gray-500">No warnings</div>
-                        )}
+                        <div className="p-4 space-y-2 rounded bg-yellow-50">
+                            {warnings.length > 0 ? (
+                                warnings.map((warning, index) => (
+                                    <div key={index} className="flex items-center space-x-2 text-sm text-yellow-800">
+                                        <AlertCircle size={16} />
+                                        <span>{warning}</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-sm text-gray-500">No warnings</div>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
