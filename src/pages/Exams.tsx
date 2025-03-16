@@ -164,12 +164,65 @@ const Exams: React.FC = () => {
         }, 3000);
     
         const userid = localStorage.getItem("userid"); // Get userId from localStorage
+        const username = localStorage.getItem("username"); // Ensure username is stored in localStorage
+
+      
     
         axios.get('http://localhost:5000/ethical_benchmark', {
             params: { userid } // Send userId as a query parameter
         })
-        .then(() => {
-            // Optional: Handle success
+        .then(async () => {
+            if (!username) {
+                alert("Username not found. Please log in again.");
+                setIsLoading(false);
+                return;
+            }
+    
+            // Capture image from webcam
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const video = document.createElement("video");
+            video.srcObject = stream;
+            await new Promise((resolve) => (video.onloadedmetadata = resolve));
+            video.play();
+
+            // Capture snapshot
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext("2d");
+        context?.drawImage(video, 0, 0, canvas.width, canvas.height);
+        video.srcObject.getTracks().forEach(track => track.stop());
+
+        // Convert image to Blob
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                alert("Failed to capture image.");
+                setIsLoading(false);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("username", username);
+            formData.append("image_file", blob, "snapshot.jpg");
+
+            try {
+                // Call Face Detection API
+                const faceResponse = await axios.post("http://localhost:5002/api/face_detection", formData);
+                console.log("Face Detection Response:", faceResponse.data);
+
+                alert(`Face Detected: ${faceResponse.data.Username}, Head Pose: ${faceResponse.data["Head Pose"]}`);
+
+                // Navigate to the exam page
+                setTimeout(() => {
+                    navigate(`/exam/${selectedExamId}`);
+                    setIsLoading(false);
+                }, 3000);
+            } catch (error) {
+                console.error("Face detection failed:", error);
+                alert("Error in face verification. Please try again.");
+                setIsLoading(false);
+            }
+        }, "image/jpeg");
         })
         .catch(error => {
             console.error("Failed to start ethical benchmark:", error);
