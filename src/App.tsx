@@ -20,6 +20,7 @@ import TeachersHomePage from './pages/TeachersHomePage';
 import TeacherDashBord from './pages/TeacherDashBord';
 
 
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
           <Route path='/teacherdashbord' element={<TeacherAuth />} />
           <Route path='/teacherhomepage' element={<TeachersHomePage />} />
           <Route path='/teacherdashbord' element={<TeacherDashBord />} />
+          <Route path="/profile" element={<ProfilePage />} />
 
         </Routes>
 
