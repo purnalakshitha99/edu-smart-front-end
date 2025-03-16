@@ -69,8 +69,8 @@ export function TeacherAuth() {
                     icon: 'success',
                     title: 'Login Successful!',
                     text: 'You have successfully logged in.',
-                }).then(() => {
-                    window.location.href = "/teacher/dashboard"; // Redirect to teacher dashboard
+                }).then(() => {  
+                    window.location.href = ""; // Redirect to teacher dashboard
                 });
 
             } else {
