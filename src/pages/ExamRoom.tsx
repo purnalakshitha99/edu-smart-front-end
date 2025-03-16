@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import Webcam from 'react-webcam';
-import { Clock } from 'lucide-react';
+import React, { useEffect, useRef, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import Webcam from "react-webcam";
+import { Clock } from "lucide-react";
+import Exam from "./Exam";
 
 const ExamRoom = () => {
   const { examId } = useParams();
@@ -15,7 +16,7 @@ const ExamRoom = () => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          navigate('/exams');
+          navigate("/exams");
           return 0;
         }
         return prev - 1;
@@ -30,7 +31,7 @@ const ExamRoom = () => {
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
   const mockQuestions = [
@@ -41,8 +42,8 @@ const ExamRoom = () => {
         "To handle side effects in functional components",
         "To create new components",
         "To style components",
-        "To handle routing"
-      ]
+        "To handle routing",
+      ],
     },
     // Add more questions as needed
   ];
@@ -57,43 +58,13 @@ const ExamRoom = () => {
               <h1 className="text-2xl font-bold">Exam #{examId}</h1>
               <div className="flex items-center">
                 <Clock className="w-5 h-5 mr-2 text-gray-600" />
-                <span className="text-lg font-semibold">{formatTime(timeLeft)}</span>
+                <span className="text-lg font-semibold">
+                  {formatTime(timeLeft)}
+                </span>
               </div>
             </div>
-
-            {mockQuestions.map((q) => (
-              <div key={q.id} className="mb-8">
-                <h3 className="mb-4 text-lg font-semibold">{q.question}</h3>
-                <div className="space-y-3">
-                  {q.options.map((option, idx) => (
-                    <label key={idx} className="flex items-center p-3 space-x-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                      <input type="radio" name={`question-${q.id}`} className="w-4 h-4 text-blue-600" />
-                      <span>{option}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ))}
+            <Exam />
           </div>
-
-          {/* Webcam feed only */}
-          {/* <div className="space-y-4 lg:col-span-1">
-            <div className="p-4 bg-white rounded-lg shadow-md">
-              <Webcam
-                ref={webcamRef}
-                className="w-full rounded-lg"
-                mirrored
-                screenshotFormat="image/jpeg"
-                audio={false}
-                videoConstraints={{
-                  width: 480,
-                  height: 360,
-                  facingMode: "user"
-                }}
-              />
-              <p className="mt-2 text-sm text-center text-gray-500">Webcam feed (no face detection)</p>
-            </div>
-          </div> */}
         </div>
       </div>
     </div>
