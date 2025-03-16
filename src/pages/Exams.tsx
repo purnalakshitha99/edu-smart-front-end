@@ -358,6 +358,7 @@ const Exams: React.FC = () => {
 
             <FullScreenLoader isLoading={isLoading} />
         </div>
+        
     );
 };
 
