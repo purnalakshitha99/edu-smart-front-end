@@ -15,6 +15,7 @@ import {
   Mic,
   MicOff,
 } from "lucide-react";
+import UploadDocument from "./UploadDocument";
 
 interface TeacherDashBordProps {}
 
@@ -36,6 +37,11 @@ const TeacherDashBord: React.FC<TeacherDashBordProps> = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
+  const [documents, setDocuments] = useState<string[]>([
+    "Lesson Plan - Week 1",
+    "Classroom Rules",
+    "Homework Assignment 1",
+  ]); // Sample document names
 
   const sidebarItems: SidebarItem[] = [
     { id: "dashboard", label: "Dashboard", icon: <Menu /> },
@@ -52,6 +58,128 @@ const TeacherDashBord: React.FC<TeacherDashBordProps> = () => {
     { id: 3, name: "Mike Johnson", emotion: "Confused", time: "10 mins ago" },
     { id: 4, name: "Sarah Williams", emotion: "Engaged", time: "15 mins ago" },
   ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return (
+          <div className="grid grid-cols-3 gap-6 p-6 h-[calc(100vh-5rem)] overflow-y-auto">
+            {/* Camera Feed */}
+            <div className="col-span-2 p-4 bg-white rounded-lg shadow-md">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Teacher Camera Feed</h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setIsMicOn(!isMicOn)}
+                    className={`p-2 rounded-full ${
+                      isMicOn
+                        ? "bg-indigo-100 text-indigo-600"
+                        : "bg-red-100 text-red-600"
+                    }`}
+                  >
+                    {isMicOn ? (
+                      <Mic className="w-5 h-5" />
+                    ) : (
+                      <MicOff className="w-5 h-5" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setIsCameraOn(!isCameraOn)}
+                    className={`p-2 rounded-full ${
+                      isCameraOn
+                        ? "bg-indigo-100 text-indigo-600"
+                        : "bg-red-100 text-red-600"
+                    }`}
+                  >
+                    {isCameraOn ? (
+                      <Video className="w-5 h-5" />
+                    ) : (
+                      <VideoOff className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              <div className="relative overflow-hidden bg-gray-900 rounded-lg aspect-video">
+                {isCameraOn ? (
+                  <Webcam
+                    className="object-cover w-full h-full"
+                    mirrored={true}
+                    audio={isMicOn}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full">
+                    <VideoOff className="w-16 h-16 text-gray-500" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Student Emotions Panel */}
+            <div className="p-4 bg-white rounded-lg shadow-md">
+              <h2 className="mb-4 text-lg font-semibold">Student Emotions</h2>
+              <div className="space-y-4">
+                {studentEmotions.map((student) => (
+                  <div
+                    key={student.id}
+                    className="flex items-center justify-between p-4 rounded-lg bg-gray-50"
+                  >
+                    <div>
+                      <h3 className="font-medium text-gray-900">
+                        {student.name}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {student.emotion}
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {student.time}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-3 col-span-2 gap-6">
+              <div className="p-6 bg-white rounded-lg shadow-md">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Total Students
+                </h3>
+                <p className="mt-2 text-3xl font-bold text-indigo-600">24</p>
+              </div>
+              <div className="p-6 bg-white rounded-lg shadow-md">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Average Engagement
+                </h3>
+                <p className="mt-2 text-3xl font-bold text-green-600">85%</p>
+              </div>
+              <div className="p-6 bg-white rounded-lg shadow-md">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Active Time
+                </h3>
+                <p className="mt-2 text-3xl font-bold text-blue-600">45m</p>
+              </div>
+            </div>
+          </div>
+        );
+      case "documents":
+        return (
+          <div className="p-6 h-[calc(100vh-5rem)] overflow-y-auto">
+           <UploadDocument />
+          </div>
+        );
+      case "reports":
+        return <div className="p-6 h-[calc(100vh-5rem)] overflow-y-auto">Reports Content</div>;
+      case "students":
+        return <div className="p-6 h-[calc(100vh-5rem)] overflow-y-auto">Students Content</div>;
+      case "courses":
+        return <div className="p-6 h-[calc(100vh-5rem)] overflow-y-auto">Courses Content</div>;
+      case "settings":
+        return <div className="p-6 h-[calc(100vh-5rem)] overflow-y-auto">Settings Content</div>;
+      default:
+        return <div className="p-6 h-[calc(100vh-5rem)] overflow-y-auto">Default Content</div>;
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -110,101 +238,8 @@ const TeacherDashBord: React.FC<TeacherDashBordProps> = () => {
           </div>
         </header>
 
-        {/* Content Grid */}
-        <div className="grid grid-cols-3 gap-6 p-6 h-[calc(100vh-5rem)] overflow-y-auto">
-          {/* Camera Feed */}
-          <div className="col-span-2 p-4 bg-white rounded-lg shadow-md">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Teacher Camera Feed</h2>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => setIsMicOn(!isMicOn)}
-                  className={`p-2 rounded-full ${
-                    isMicOn
-                      ? "bg-indigo-100 text-indigo-600"
-                      : "bg-red-100 text-red-600"
-                  }`}
-                >
-                  {isMicOn ? (
-                    <Mic className="w-5 h-5" />
-                  ) : (
-                    <MicOff className="w-5 h-5" />
-                  )}
-                </button>
-                <button
-                  onClick={() => setIsCameraOn(!isCameraOn)}
-                  className={`p-2 rounded-full ${
-                    isCameraOn
-                      ? "bg-indigo-100 text-indigo-600"
-                      : "bg-red-100 text-red-600"
-                  }`}
-                >
-                  {isCameraOn ? (
-                    <Video className="w-5 h-5" />
-                  ) : (
-                    <VideoOff className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </div>
-            <div className="relative overflow-hidden bg-gray-900 rounded-lg aspect-video">
-              {isCameraOn ? (
-                <Webcam
-                  className="object-cover w-full h-full"
-                  mirrored={true}
-                  audio={isMicOn}
-                />
-              ) : (
-                <div className="flex items-center justify-center w-full h-full">
-                  <VideoOff className="w-16 h-16 text-gray-500" />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Student Emotions Panel */}
-          <div className="p-4 bg-white rounded-lg shadow-md">
-            <h2 className="mb-4 text-lg font-semibold">Student Emotions</h2>
-            <div className="space-y-4">
-              {studentEmotions.map((student) => (
-                <div
-                  key={student.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-gray-50"
-                >
-                  <div>
-                    <h3 className="font-medium text-gray-900">
-                      {student.name}
-                    </h3>
-                    <p className="text-sm text-gray-500">{student.emotion}</p>
-                  </div>
-                  <span className="text-xs text-gray-400">{student.time}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-3 col-span-2 gap-6">
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Total Students
-              </h3>
-              <p className="mt-2 text-3xl font-bold text-indigo-600">24</p>
-            </div>
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Average Engagement
-              </h3>
-              <p className="mt-2 text-3xl font-bold text-green-600">85%</p>
-            </div>
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Active Time
-              </h3>
-              <p className="mt-2 text-3xl font-bold text-blue-600">45m</p>
-            </div>
-          </div>
-        </div>
+        {/* Content */}
+        {renderContent()}
       </div>
     </div>
   );
