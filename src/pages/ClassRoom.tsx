@@ -42,18 +42,39 @@ const ClassRoom = () => {
     const [isSendingFrame, setIsSendingFrame] = useState(false);
     const [frameCount, setFrameCount] = useState(0);
     const [processedImage, setProcessedImage] = useState<string | null>(null);
-    const [socketConnected, setSocketConnected] = useState<boolean>(false);
+    const [socketConnected, setSocketConnected] = useState(false);
     const [cameraError, setCameraError] = useState<string | null>(null);
     const frameIntervalRef = useRef<number | null>(null);
     const [isCameraReady, setIsCameraReady] = useState(false);
 
     // Get user information from localStorage
-    const [token, setToken] = useState(localStorage.getItem("token"));
-    const [userId, setUserId] = useState(localStorage.getItem("userid"));
-    const [userImage, setUserImage] = useState(localStorage.getItem("imageurl"));
+    const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+    const [userId, setUserId] = useState<string | null>(localStorage.getItem("userid"));
+    const [userImage, setUserImage] = useState<string | null>(localStorage.getItem("imageurl"));
+    const [username, setUsername] = useState<string | null>(localStorage.getItem("username") || ""); 
+    const [isLoading, setIsLoading] = useState(true);
 
     const drowsinessApiUrl = 'http://localhost:5001/api/process_frame';
     const emotionApiUrl = 'http://localhost:5003/api/process_frame';
+
+     useEffect(() => {
+        if (userId) {
+            setIsLoading(false); // Set loading to false when userId is available
+        }
+     }, [userId]);
+    
+    
+        useEffect(() => {
+         const handleStorageChange = () => {
+           setUsername(localStorage.getItem("username") || "");
+         };
+
+         window.addEventListener('storage', handleStorageChange);
+
+         return () => {
+           window.removeEventListener('storage', handleStorageChange);
+         };
+    }, []);
 
     // Initialize beep sound
     useEffect(() => {
@@ -149,8 +170,6 @@ const ClassRoom = () => {
                     errorMessage += "Camera access was denied. Please check your browser permissions.";
                 } else if (err.name === 'NotFoundError') {
                     errorMessage += "No camera device found. Please connect a camera.";
-                } else if (err.name === 'NotReadableError') {
-                    errorMessage += "Camera is already in use by another application.";
                 } else {
                     errorMessage += `Error: ${err.message}`;
                 }
@@ -196,7 +215,7 @@ const ClassRoom = () => {
             const data = {
                 frame: base64Data,
                 student_id: userId,
-                username: localStorage.getItem("username")
+                username: username
             };
 
             // Send frame to both backends concurrently
@@ -307,6 +326,10 @@ const ClassRoom = () => {
         endCall();
         startCamera();
     };
+
+    if (isLoading) {
+        return <div>Loading...</div>; // Or a spinner
+    }
 
     return (
         <div className="flex h-screen p-4 bg-blue-50">
