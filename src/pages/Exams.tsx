@@ -1,63 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { Clock, AlertCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 interface Exam {
-    id: string;
-    title: string;
-    duration: string;
-    questions: number;
+    _id: string;
+    name: string;      // Changed from 'title' to 'name'
+    time_limit: string;  // Changed from 'duration' to 'time_limit'
+    questions: any[];     // Adjusted type as necessary
     subject: string;
     date: string;
+    completed: boolean;
 }
-
-const exams: Exam[] = [
-    {
-        id: '1',
-        title: 'JavaScript Fundamentals',
-        duration: '60 minutes',
-        questions: 40,
-        subject: 'Programming',
-        date: '2024-03-25 10:00 AM'
-    },
-    {
-        id: '2',
-        title: 'React Advanced Concepts',
-        duration: '90 minutes',
-        questions: 50,
-        subject: 'Web Development',
-        date: '2024-03-26 2:00 PM'
-    },
-    {
-        id: '3',
-        title: 'Data Structures & Algorithms',
-        duration: '120 minutes',
-        questions: 60,
-        subject: 'Computer Science',
-        date: '2024-03-27 9:00 AM'
-    }
-];
 
 interface ExamCardProps {
     exam: Exam;
     onStart: (id: string) => void;
 }
 
-const ExamCard: React.FC<ExamCardProps> = ({ exam, onStart }) => (
+const ExamCard: React.FC<ExamCardProps> = ({ exam: { name, time_limit, _id }, onStart }) => ( // Destructure props
     <div className="p-6 bg-white rounded-lg shadow-md">
-        <h3 className="mb-3 text-xl font-semibold">{exam.title}</h3>
+        <h3 className="mb-3 text-xl font-semibold">{name}</h3> {/* Use 'name' here */}
         <div className="mb-4 space-y-2 text-gray-600">
             <div className="flex items-center">
                 <Clock className="w-4 h-4 mr-2" />
-                <span>{exam.duration}</span>
+                <span>{time_limit} minutes</span> {/* Use 'time_limit' here */}
             </div>
-            <div>Questions: {exam.questions}</div>
-            <div>Subject: {exam.subject}</div>
-            <div>Date: {exam.date}</div>
         </div>
         <button
-            onClick={() => onStart(exam.id)}
+            onClick={() => onStart(_id)}
             className="w-full py-2 text-white transition-colors bg-blue-600 rounded-md hover:bg-blue-700"
         >
             Start Exam
@@ -71,14 +42,21 @@ interface ExamRestrictionsProps {
     onConfirm: () => void;
 }
 
-const ExamRestrictions: React.FC<ExamRestrictionsProps> = ({ show, onCancel, onConfirm }) => {
+const ExamRestrictions: React.FC<ExamRestrictionsProps> = ({
+    show,
+    onCancel,
+    onConfirm,
+}) => {
     if (!show) return null;
 
     return (
         <div className="fixed top-0 left-0 flex items-center justify-center w-full h-full bg-gray-500 bg-opacity-75">
             <div className="bg-white rounded-lg p-8 max-w-md w-full">
                 <h2 className="text-2xl font-semibold mb-4">Exam Restrictions</h2>
-                <p className="text-gray-700 mb-4">Please acknowledge the following restrictions before starting the exam:</p>
+                <p className="text-gray-700 mb-4">
+                    Please acknowledge the following restrictions before starting the
+                    exam:
+                </p>
                 <ul className="list-disc list-inside mb-4">
                     <li>No external websites or resources allowed.</li>
                     <li>Do not use any unauthorized materials.</li>
@@ -122,7 +100,33 @@ const Exams: React.FC = () => {
     const [showWarning, setShowWarning] = useState(false);
     const [showRestrictions, setShowRestrictions] = useState(false);
     const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false); // Loading state එක
+    const [isLoading, setIsLoading] = useState(false);
+    const [exams, setExams] = useState<Exam[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            try {
+                const response = await axios.get('http://localhost:5005/get-qa'); // Assuming this route returns your exam data
+                console.log("Fetched Exams data:", response.data);
+
+                if (response.data && Array.isArray(response.data)) {
+                    //   Filter to display only not completed exams
+                    const incompleteExams = response.data.filter((exam: Exam) => !exam.completed);
+                    setExams(incompleteExams);
+                    
+                } else {
+                    console.warn("Data was either nonexistent or not an array format.");
+                }
+            } catch (error) {
+                console.error("Failed to fetch exams:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const handleStartExam = (examId: string) => {
         if (!navigator.mediaDevices?.getUserMedia) {
@@ -134,48 +138,27 @@ const Exams: React.FC = () => {
         setShowRestrictions(true);
     };
 
-    // const handleConfirmStart = () => {
-    //     setShowRestrictions(false);
-    //     setIsLoading(true); // Loading state එක true කරන්න
-    
-    //     // තත්පර 3ක delay එකක් දෙන්න
-    //     setTimeout(() => {
-    //         navigate(`/exam/${selectedExamId}`);
-    //         setIsLoading(false); // Loading state එක false කරන්න
-    //     }, 3000); // 3000 milliseconds = 3 seconds
-    
-    //     axios.get('http://localhost:5000/ethical_benchmark')
-    //         .then(() => {
-    //             // Optional: Do something after ethical benchmark
-    //         })
-    //         .catch(error => {
-    //             console.error("Failed to start ethical benchmark:", error);
-    //             // Optional: Handle error
-    //         });
-    // };
-
     const handleConfirmStart = () => {
         setShowRestrictions(false);
         setIsLoading(true);
-    
+
         setTimeout(() => {
             navigate(`/exam/${selectedExamId}`);
             setIsLoading(false);
         }, 3000);
-    
+
         const userid = localStorage.getItem("userid"); // Get userId from localStorage
-    
+
         axios.get('http://localhost:5000/ethical_benchmark', {
             params: { userid } // Send userId as a query parameter
         })
-        .then(() => {
-            // Optional: Handle success
-        })
-        .catch(error => {
-            console.error("Failed to start ethical benchmark:", error);
-        });
+            .then(() => {
+                // Optional: Handle success
+            })
+            .catch(error => {
+                console.error("Failed to start ethical benchmark:", error);
+            });
     };
-
 
     const handleCancelStart = () => {
         setShowRestrictions(false);
@@ -203,11 +186,20 @@ const Exams: React.FC = () => {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                    {exams.map((exam) => (
-                        <ExamCard key={exam.id} exam={exam} onStart={handleStartExam} />
-                    ))}
-                </div>
+                {isLoading ? (
+                    <FullScreenLoader isLoading={isLoading} />
+                ) : exams.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                        {exams.map((exam) => (
+                            <ExamCard key={exam._id} exam={exam} onStart={handleStartExam} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center">
+                        <p className="text-lg text-gray-600">No exams available at this time.</p>
+                    </div>
+                )}
+
             </div>
 
             <ExamRestrictions

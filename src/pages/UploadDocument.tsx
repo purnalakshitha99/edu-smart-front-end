@@ -2,19 +2,25 @@ import { useState } from "react";
 
 const UploadDocument = () => {
   const [file, setFile] = useState(null);
-  const [qaPairs, setQaPairs] = useState([
-    // {
-    //   question: "What is the capital of France?",
-    //   options: ["Paris", "London", "Berlin", "Madrid"],
-    //   answer: 1,
-    // },
-  ]);
+  const [qaPairs, setQaPairs] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const [loadQa, setLoadQa] = useState(false);
+
+  const [quizName, setQuizName] = useState(""); // New state for quiz name
+  const [quizTime, setQuizTime] = useState(0); // New state for quiz time in minutes
+
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
+  };
+
+  const handleQuizNameChange = (e) => {
+    setQuizName(e.target.value);
+  };
+
+  const handleQuizTimeChange = (e) => {
+    setQuizTime(parseInt(e.target.value, 10)); // Parse to integer
   };
 
   const handleResponseData = (rawData) => {
@@ -53,6 +59,15 @@ const UploadDocument = () => {
       return;
     }
 
+    if (!quizName) {
+      alert("Please enter a quiz name.");
+      return;
+    }
+
+    if (!quizTime || quizTime <= 0) {
+      alert("Please enter a valid quiz time (in minutes).");
+      return;
+    }
     const formData = new FormData();
     formData.append("file", file);
 
@@ -137,13 +152,21 @@ const UploadDocument = () => {
 
       console.log("Split QA Pairs:", Qa);
 
+      // Include quizName and quizTime in the data sent to the backend.
+      const quizData = {
+        name: quizName,
+        time: quizTime,
+        questions: Qa,
+      };
+
       const res = await fetch("http://127.0.0.1:5005/save-qa", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(Qa),
+        body: JSON.stringify(quizData),
       });
+
       if (!res.ok) {
         const errorData = await res.json();
         setError(errorData.error || "An unknown error occurred.");
@@ -260,6 +283,34 @@ const UploadDocument = () => {
           alignItems: "center",
         }}
       >
+        <input
+          type="text"
+          placeholder="Quiz Name"
+          value={quizName}
+          onChange={handleQuizNameChange}
+          style={{
+            marginBottom: "10px",
+            padding: "8px",
+            border: "1px solid #ccc",
+            width: "100%",
+            maxWidth: "400px",
+          }}
+        />
+
+        <input
+          type="number"
+          placeholder="Quiz Time (minutes)"
+          value={quizTime}
+          onChange={handleQuizTimeChange}
+          style={{
+            marginBottom: "10px",
+            padding: "8px",
+            border: "1px solid #ccc",
+            width: "100%",
+            maxWidth: "400px",
+          }}
+        />
+
         <input
           type="file"
           accept=".pdf"
