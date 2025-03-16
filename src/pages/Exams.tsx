@@ -95,6 +95,142 @@ const FullScreenLoader = ({ isLoading }: { isLoading: boolean }) => {
     );
 };
 
+interface CameraPopupProps {
+    show: boolean;
+    onClose: () => void;
+    onVerification: (username: string, headPose: string) => void;
+}
+
+const CameraPopup: React.FC<CameraPopupProps> = ({ show, onClose, onVerification }) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [stream, setStream] = useState<MediaStream | null>(null);
+    const [verifying, setVerifying] = useState(false);
+    const [verificationError, setVerificationError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let currentStream: MediaStream | null = null;
+
+        const getCameraStream = async () => {
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                setStream(currentStream);
+                if (videoRef.current) {
+                    videoRef.current.srcObject = currentStream;
+                }
+            } catch (error) {
+                console.error("Error accessing webcam:", error);
+            }
+        };
+
+        if (show) {
+            getCameraStream();
+        }
+
+        return () => {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, [show]);
+
+    const verifyUser = async () => {
+        setVerifying(true);
+        setVerificationError(null);
+        const username = localStorage.getItem("username");
+
+        if (!username) {
+            setVerificationError("Username not found. Please log in again.");
+            setVerifying(false);
+            return;
+        }
+
+        if (!stream) {
+            setVerificationError("Webcam stream not available");
+            setVerifying(false);
+            return;
+        }
+
+        try {
+            const video = videoRef.current;
+            if (!video) {
+                setVerificationError("Video element not available");
+                setVerifying(false);
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+
+            if (!ctx) {
+                setVerificationError("Could not get 2D context from canvas");
+                setVerifying(false);
+                return;
+            }
+
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageDataURL = canvas.toDataURL('image/jpeg');
+
+            const formData = new FormData();
+            formData.append('username', username);
+
+            // Convert data URL to Blob
+            const blob = await (await fetch(imageDataURL)).blob();
+            formData.append('image_file', blob, 'snapshot.jpg');
+
+            const response = await axios.post('http://localhost:5002/api/face_detection', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            console.log("Face detection API response:", response.data);
+            onVerification(response.data.Username, response.data["Head Pose"]);
+            onClose();
+
+        } catch (error) {
+            console.error("Face detection API error:", error);
+            setVerificationError("Face detection failed. Please try again.");
+        } finally {
+            setVerifying(false);
+        }
+    };
+
+    if (!show) return null;
+
+    return (
+        <div className="fixed top-0 left-0 flex items-center justify-center w-full h-full bg-gray-500 bg-opacity-75 z-50">
+            <div className="bg-white rounded-lg p-8 max-w-md w-full">
+                <h2 className="text-2xl font-semibold mb-4">Verify Your Identity</h2>
+                {verificationError && <div className="text-red-500 mb-4">{verificationError}</div>}
+                <div className="mb-4">
+                    <video
+                        ref={videoRef}
+                        width="100%"
+                        autoPlay
+                        muted
+                    />
+                </div>
+                <div className="flex justify-end">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 mr-2 text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={verifyUser}
+                        className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                        disabled={verifying}
+                    >
+                        {verifying ? "Verifying..." : "Verify"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const Exams: React.FC = () => {
     const navigate = useNavigate();
     const [showWarning, setShowWarning] = useState(false);
@@ -141,28 +277,63 @@ const Exams: React.FC = () => {
     const handleConfirmStart = () => {
         setShowRestrictions(false);
         setIsLoading(true);
-
+    
         setTimeout(() => {
             navigate(`/exam/${selectedExamId}`);
             setIsLoading(false);
         }, 3000);
-
+    
         const userid = localStorage.getItem("userid"); // Get userId from localStorage
-
+    
         axios.get('http://localhost:5000/ethical_benchmark', {
             params: { userid } // Send userId as a query parameter
         })
-            .then(() => {
-                // Optional: Handle success
-            })
-            .catch(error => {
-                console.error("Failed to start ethical benchmark:", error);
-            });
+        .then(() => {
+            // Optional: Handle success
+        })
+        .catch(error => {
+            console.error("Failed to start ethical benchmark:", error);
+        });
     };
+
 
     const handleCancelStart = () => {
         setShowRestrictions(false);
         setSelectedExamId(null);
+    };
+
+    const handleCameraPopupClose = () => {
+        setShowCameraPopup(false);
+    };
+
+    const handleUserVerification = (username: string, headPose: string) => {
+        setVerifiedUsername(username);
+        setHeadPose(headPose);
+        setIsLoading(true); // Start loading after successful verification
+        setShowCameraPopup(false);
+
+        // Proceed with starting the exam and API calls after a delay
+        setTimeout(() => {
+            Promise.all([
+                axios.get('http://localhost:5000/ethical_benchmark', {
+                    params: { userid: localStorage.getItem("userid") }
+                }),
+                new Promise((resolve) => {
+                    navigate(`/exam/${selectedExamId}`);
+                    resolve("Navigated to exam");
+                })
+            ])
+                .then(() => {
+                    alert(`Face Detected: ${username}, Head Pose: ${headPose}`); //Display alert
+                })
+                .catch((error) => {
+                    console.error("Error during startup:", error);
+                    alert("Error during startup. Please try again.");
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+        }, 3000); //Delay for 3sec
     };
 
     return (
@@ -207,9 +378,15 @@ const Exams: React.FC = () => {
                 onCancel={handleCancelStart}
                 onConfirm={handleConfirmStart}
             />
+            <CameraPopup
+                show={showCameraPopup}
+                onClose={handleCameraPopupClose}
+                onVerification={handleUserVerification}
+            />
 
             <FullScreenLoader isLoading={isLoading} />
         </div>
+        
     );
 };
 
