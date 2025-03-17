@@ -8,16 +8,15 @@ interface ExamProps {
 }
 
 const Exam: React.FC<ExamProps> = ({ quizName, quizzes, questions }) => {
-  // Receive props
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [score, setScore] = useState(null);
   const [isComplete, setIsComplete] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    console.log("Received quizName:", quizName); // Check the received value
-    console.log("Received quizzes:", quizzes); // Check the received value
-    console.log("Received questions:", questions); // Check the received value
+    console.log("Received quizName:", quizName);
+    console.log("Received quizzes:", quizzes);
+    console.log("Received questions:", questions);
   }, [quizName, quizzes, questions]);
 
   const handleNext = () => {
@@ -43,22 +42,73 @@ const Exam: React.FC<ExamProps> = ({ quizName, quizzes, questions }) => {
         correctCount++;
       }
     });
-    setScore((correctCount / questions.length) * 100);
-    handleSubmitQuiz();
+    const finalScore = (correctCount / questions.length) * 100; // Calculate score here
+    setScore(finalScore);
+    handleSubmitQuiz(finalScore); // Pass calculated score
   };
 
-  const handleSubmitQuiz = async () => {
+  const handleSubmitQuiz = async (finalScore) => {
     console.log("Submitting quiz with name:", quizName);
-    try {
-      const response = await fetch("http://localhost:5005/complete-quiz", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ quizName: quizName }),
-      });
 
-      if (response.ok) {
+    // Get user from local storage
+    const userString = localStorage.getItem("user");
+    let user = null;
+    if (userString) {
+      try {
+        user = JSON.parse(userString);
+      } catch (error) {
+        console.error("Error parsing user from local storage:", error);
+        return; // Don't submit if user is not valid
+      }
+    }
+    if (!user) {
+      console.error("User not found in local storage");
+      return; // Don't submit if user is not available
+    }
+
+    try {
+      const resultsData = {
+        userId: user._id, // Assuming your user object has an _id property
+        quizName: quizName,
+        score: finalScore, // Pass score
+        selectedAnswers: selectedAnswers,
+      };
+
+      // save the reult into the databse here
+      const resultsResponse = await fetch(
+        "http://localhost:5005/save-results",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(resultsData),
+        }
+      );
+
+      if (resultsResponse.ok) {
+        console.log("Quiz results saved successfully");
+        setIsComplete(true); // The code runs correctly
+      } else {
+        console.error("Failed to save quiz results");
+      }
+    } catch (error) {
+      console.error("Error saving quiz results:", error);
+    }
+
+    try {
+      const completeResponse = await fetch(
+        "http://localhost:5005/complete-quiz",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ quizName: quizName }),
+        }
+      );
+
+      if (completeResponse.ok) {
         console.log("Quiz completion status updated");
         setIsComplete(true);
       } else {
