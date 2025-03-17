@@ -1,38 +1,24 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-const Exam = () => {
-  const [quizzes, setQuizzes] = useState([]); // Use a more descriptive name
-  const [questions, setQuestions] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+interface ExamProps {
+  quizName: string;
+  quizzes: any[];
+  questions: any[];
+}
+
+const Exam: React.FC<ExamProps> = ({ quizName, quizzes, questions }) => {
+  // Receive props
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [score, setScore] = useState(null);
-  const [quizName, setQuizName] = useState(""); // Ensure this is properly set with the current quiz's name
   const [isComplete, setIsComplete] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("http://localhost:5005/get-qa");
-        const data = await response.json();
-
-        console.log("Fetched data:", data); // Log the fetched data
-
-        if (data && Array.isArray(data) && data.length > 0) {
-          // Assuming you want to display the first quiz's questions
-          setQuizzes(data); // Save the quizzes data
-          setQuestions(data[0].questions); // Access questions of the first quiz
-          setQuizName(data[0].name); // Set the quiz name from fetched data
-        } else {
-          console.warn("No quizzes found or invalid data format.");
-          setQuestions([]); // Ensure questions are empty
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    fetchData();
-  }, []);
+    console.log("Received quizName:", quizName); // Check the received value
+    console.log("Received quizzes:", quizzes); // Check the received value
+    console.log("Received questions:", questions); // Check the received value
+  }, [quizName, quizzes, questions]);
 
   const handleNext = () => {
     if (selectedAnswers[currentIndex] !== undefined) {
@@ -62,7 +48,7 @@ const Exam = () => {
   };
 
   const handleSubmitQuiz = async () => {
-    console.log("Submitting quiz with name:", quizName); // Add this line
+    console.log("Submitting quiz with name:", quizName);
     try {
       const response = await fetch("http://localhost:5005/complete-quiz", {
         method: "POST",
@@ -82,7 +68,6 @@ const Exam = () => {
       console.error("Error updating quiz completion status:", error);
     }
   };
-  console.log("Questions:", questions); // Check the questions state
 
   if (questions.length === 0) {
     return <div className="text-center text-lg font-bold p-5">Loading...</div>;
@@ -119,7 +104,6 @@ const Exam = () => {
                             : "text-gray-500"
                         }`}
                       >
-                        {" "}
                         {index + 1}.
                       </span>
                       {option}
