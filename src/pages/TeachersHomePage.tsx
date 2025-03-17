@@ -3,15 +3,13 @@ import { BookOpen, ArrowRight } from "lucide-react";
 
 // Assuming TeacherDashBord is defined elsewhere and properly exported
 import TeacherDashBord from "./TeacherDashBord";
+import { Link } from "react-router-dom";
 
 interface TeachersHomePageProps {}
 
 const TeachersHomePage: React.FC<TeachersHomePageProps> = () => {
   const [showDashboard, setShowDashboard] = useState(false);
 
-  if (showDashboard) {
-    return <TeacherDashBord />;
-  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="container px-4 py-16 mx-auto">
@@ -33,13 +31,13 @@ const TeachersHomePage: React.FC<TeachersHomePageProps> = () => {
               progress, and foster a dynamic learning environment.
             </p>
 
-            <button
-              onClick={() => setShowDashboard(true)}
-              className="inline-flex items-center px-6 py-3 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
-            >
-              Start Teaching
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </button>
+            <Link
+      to="/teacherdashbord"
+      className="inline-flex items-center px-6 py-3 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
+    >
+      Start Teaching
+      <ArrowRight className="w-5 h-5 ml-2" />
+    </Link>
 
             <div className="grid grid-cols-3 gap-6 pt-8">
               <div className="text-center">

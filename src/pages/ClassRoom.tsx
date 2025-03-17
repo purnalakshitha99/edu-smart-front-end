@@ -118,13 +118,13 @@ const ClassRoom = () => {
                 clearInterval(frameIntervalRef.current);
             }
 
-            const intervalId = setInterval(() => {
+            const intervalId = window.setInterval(() => {
                 if (videoRef.current) {
                     sendFrame(videoRef.current);
                 }
             }, 1000);
 
-            frameIntervalRef.current = intervalId;
+            frameIntervalRef.current = intervalId as unknown as number;
             setSocketConnected(true);
 
             return () => {
@@ -259,15 +259,18 @@ const ClassRoom = () => {
 
             // Process emotion response
             if (emotionResponse.status === 200) {
-                const emotionResult = emotionResponse.data;
-                setEmotion(emotionResult.emotion);
+  const emotionResult = emotionResponse.data;
+  setEmotion(emotionResult.emotion);
 
-                if (emotionResult.updated_database) {
-                    console.log("Emotion data saved to database");
-                }
-            } else {
-                console.error("Error processing emotion:", emotionResponse.statusText);
-            }
+  // Save emotion to localStorage
+  localStorage.setItem("emotion", emotionResult.emotion || "");
+
+  if (emotionResult.updated_database) {
+    console.log("Emotion data saved to database");
+  }
+} else {
+  console.error("Error processing emotion:", emotionResponse.statusText);
+}
 
             setFrameCount((prev) => prev + 1);
             setSocketConnected(true); // If both are successful, consider connected
