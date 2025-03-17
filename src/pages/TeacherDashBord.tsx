@@ -1,6 +1,8 @@
 // TeacherDashBord.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import Webcam from "react-webcam";
+import { database, ref, onValue } from "../firebase"; // Make sure this points to the correct firebase.ts file
+
 import {
   Menu,
   FileText,
@@ -171,6 +173,22 @@ const TeacherDashBord: React.FC<TeacherDashBordProps> = () => {
       console.log("Socket cleanup complete");
     };
   }, [fetchInitialEmotionData]);
+
+  useEffect(() => {
+    const emotionRef = ref(database, "studentEmotions/");
+    onValue(emotionRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const updatedEmotions = Object.keys(data).map((key) => ({
+          student_id: key,
+          username: data[key].username,
+          emotion: data[key].emotion,
+          timestamp: data[key].timestamp,
+        }));
+        setStudentEmotions(updatedEmotions); // Update state with the latest data
+      }
+    });
+  }, []);
 
   //Helper function to format timestamp
 
@@ -370,48 +388,49 @@ const TeacherDashBord: React.FC<TeacherDashBordProps> = () => {
               </button>
             </div>
 
-            {isLoading ? (
-              <div className="flex items-center justify-center p-8">
-                <div className="w-8 h-8 border-4 border-gray-200 rounded-full border-t-indigo-600 animate-spin"></div>
-              </div>
-            ) : studentEmotions.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                No student emotion data available
-              </div>
-            ) : (
-              <div className="space-y-4 max-h-[500px] overflow-y-auto">
-                <div
-                  className="flex items-center justify-between p-4 border-l-4 rounded-lg bg-gray-50"
-                  style={{
-                    borderLeftColor:
-                      emotion === "happy"
-                        ? "#10B981"
-                        : emotion === "sad"
-                        ? "#3B82F6"
-                        : emotion === "angry"
-                        ? "#EF4444"
-                        : emotion === "surprised"
-                        ? "#F59E0B"
-                        : emotion === "neutral"
-                        ? "#6B7280"
-                        : "#9CA3AF",
-                  }}
-                >
-                  <div>
-                    <h3 className="font-medium text-gray-900">
-                      Purna Lakshitha{" "}
-                      <span className="text-xl">
-                        {getEmotionEmoji(emotion)}
-                      </span>
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {emotion || "Unknown"}
-                    </p>
-                  </div>
-                  <span className="text-xs text-gray-400">12.30pm</span>
+            <div className="space-y-4 max-h-[500px] overflow-y-auto">
+              {studentEmotions.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  No student emotion data available
                 </div>
-              </div>
-            )}
+              ) : (
+                studentEmotions.map((emotionData) => (
+                  <div
+                    key={emotionData.student_id}
+                    className="flex items-center justify-between p-4 border-l-4 rounded-lg bg-gray-50"
+                    style={{
+                      borderLeftColor:
+                        emotionData.emotion === "happy"
+                          ? "#10B981"
+                          : emotionData.emotion === "sad"
+                          ? "#3B82F6"
+                          : emotionData.emotion === "angry"
+                          ? "#EF4444"
+                          : emotionData.emotion === "surprised"
+                          ? "#F59E0B"
+                          : emotionData.emotion === "neutral"
+                          ? "#6B7280"
+                          : "#9CA3AF",
+                    }}
+                  >
+                    <div>
+                      <h3 className="font-medium text-gray-900">
+                        {emotionData.username}{" "}
+                        <span className="text-xl">
+                          {getEmotionEmoji(emotionData.emotion)}
+                        </span>
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {emotionData.emotion || "Unknown"}
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {formatTimestamp(emotionData.timestamp)}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           {/* Statistics Cards */}
