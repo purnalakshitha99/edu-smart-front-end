@@ -8,7 +8,7 @@ const ExamRoom = () => {
   const { examId } = useParams();
   const navigate = useNavigate();
   const webcamRef = useRef<Webcam>(null);
-  const [timeLeft, setTimeLeft] = useState(3600); // 60 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
   const [questions, setQuestions] = useState([]);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [score, setScore] = useState(null);
