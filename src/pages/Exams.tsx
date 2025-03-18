@@ -16,14 +16,16 @@ interface ExamCardProps {
   exam: Exam;
   onStart: (id: string) => void;
 }
-const [today, setToday] = useState('');
+
+const ExamCard: React.FC<ExamCardProps> = ({ exam, onStart }) => {
+
+  const [today, setToday] = useState('');
 
   useEffect(() => {
     const todayDate = new Date();
     setToday(todayDate.toLocaleDateString()); // e.g., "12/25/2024"
   }, []);
   
-const ExamCard: React.FC<ExamCardProps> = ({ exam, onStart }) => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <h3 className="mb-3 text-xl font-semibold">{exam.name}</h3>
