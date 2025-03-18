@@ -232,7 +232,8 @@ const ExamRoom = () => {
               </>
             ) : (
               <div className="text-center text-xl font-bold text-green-600">
-                Your Score: {score?.toFixed(2)}/100
+                {/* Your Score: {score?.toFixed(2)}/100 */}
+                Well Done!
               </div>
             )}
 

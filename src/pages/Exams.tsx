@@ -7,8 +7,8 @@ interface Exam {
   _id: string;
   name: string;
   time_limit: string;
-  questions: number;
-  completed: boolean;
+  questions: any[]; // Changed to any[] to match the backend
+  complete: boolean;
   date: string;
 }
 
@@ -16,7 +16,13 @@ interface ExamCardProps {
   exam: Exam;
   onStart: (id: string) => void;
 }
+const [today, setToday] = useState('');
 
+  useEffect(() => {
+    const todayDate = new Date();
+    setToday(todayDate.toLocaleDateString()); // e.g., "12/25/2024"
+  }, []);
+  
 const ExamCard: React.FC<ExamCardProps> = ({ exam, onStart }) => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
@@ -26,9 +32,10 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onStart }) => {
           <Clock className="w-4 h-4 mr-2" />
           <span>Time Limit : {exam.time_limit}</span>
         </div>
-        <div>Questions: {exam.questions.length}</div>
+        <div>Questions: {exam.questions ? exam.questions.length : 0}</div>{" "}
+        {/*Fixed to display it if valid, else zero*/}
         <div>Subject: {exam.name}</div>
-        <div>Date: {exam.date}</div>
+        <div>Date: {today}</div>
       </div>
       <button
         onClick={() => onStart(exam._id)}
@@ -252,6 +259,8 @@ const Exams: React.FC = () => {
   const [showCameraPopup, setShowCameraPopup] = useState(false);
   const [verifiedUsername, setVerifiedUsername] = useState<string | null>(null);
   const [headPose, setHeadPose] = useState<string | null>(null);
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null); // New error state
 
   const handleStartExam = (examId: string) => {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -307,23 +316,31 @@ const Exams: React.FC = () => {
     }, 3000); //Delay for 3sec
   };
 
-  const [exams, setExams] = useState([]);
-
   useEffect(() => {
+    console.log("useEffect running");
     const fetchExams = async () => {
       try {
         const response = await axios.get("http://localhost:5005/get-qa"); // Replace with your API endpoint for exams
 
+        if (response.status !== 200) {
+          throw new Error(
+            `Failed to fetch exams. Status code: ${response.status}`
+          ); // If response is not 200, throw error
+        }
+
+        console.log("response.data", response.data);
         setExams(response.data);
-        console.log("quizz",exams)
-      } catch (error) {
+        setFetchError(null); // Clear any previous error
+      } catch (error: any) {
         console.error("Error fetching exams:", error);
-        // Handle error
+        setFetchError("Failed to load exams. Please try again later."); // Set error message
       }
     };
     fetchExams();
   }, []);
-console.log("Quizezz",exams)
+
+  console.log("Quizezz", exams);
+
   return (
     <div className="py-12 min-h-screen ">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -349,10 +366,23 @@ console.log("Quizezz",exams)
           </div>
         )}
 
+        {/* Display fetch error if any */}
+        {fetchError && (
+          <div className="p-4 mb-8 border-l-4 border-red-400 bg-red-50">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2 text-red-400" />
+              <p className="text-red-700">{fetchError}</p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {exams.map((exam) => (
-            <ExamCard key={exam._id} exam={exam} onStart={handleStartExam} />
-          ))}
+          {exams?.map((exam) => {
+            console.log(exam.name);
+            return (
+              <ExamCard key={exam._id} exam={exam} onStart={handleStartExam} />
+            );
+          })}
         </div>
       </div>
 
