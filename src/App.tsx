@@ -21,8 +21,10 @@ import TeacherDashBord from './pages/TeacherDashBord';
 
 
 import ProfilePage from './pages/ProfilePage';
+import { useEffect, useState } from 'react';
+import Test from './pages/Test';
 
-function App() {
+function App() { 
   return (
     <Router>
       <div className="flex flex-col min-h-screen bg-gray-50">
@@ -37,14 +39,18 @@ function App() {
           <Route path="/exams" element={<><Navbar /><Exams /><Footer /></>} />
           <Route path="/class" element={<><Navbar /><ClassTime /><Footer /></>} />
           <Route path='/Classroom' element={<><Navbar /><ClassRoom /><Footer /></>} />
+          <Route path='/test' element={<Test />} />
           <Route path='/teacherlogin'element={<TeacherAuth/>}/>
           <Route path="/login" element={<AuthPage />} />
           <Route path="/exam/:examId" element={<><Navbar /><ExamRoom /><Footer /></>} />
           <Route path='/roleselection' element={<RoleSelection/>}/>
           <Route path='/ethicalReport' element={<EthicalReportPage />} />
-          <Route path='/teacherdashbord' element={<TeacherAuth />} />
+          <Route path='/teacherlogin' element={<TeacherAuth />} />
           <Route path='/teacherhomepage' element={<TeachersHomePage />} />
-          <Route path='/teacherdashbord' element={<TeacherDashBord />} />
+          <Route 
+          path='/teacherdashbord' 
+          element={<TeacherDashBord />}
+        />
           <Route path="/profile" element={<ProfilePage />} />
 
         </Routes>
