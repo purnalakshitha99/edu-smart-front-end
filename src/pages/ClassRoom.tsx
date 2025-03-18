@@ -65,7 +65,7 @@ const ClassRoom = () => {
   const frameIntervalRef = useRef<number | null>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
 
-  const sendToFirebase = (emotion) => {
+  const sendToFirebase = (emotion:string) => {
     const emotionRef = ref(database, "studentEmotions/" + userId);
     set(emotionRef, {
       username: username,
@@ -377,6 +377,7 @@ const ClassRoom = () => {
     return <div>Loading...</div>; // Or a spinner
   }
 
+ 
   return (
     <div className="flex h-screen p-4 bg-blue-50">
       <div className="flex flex-col items-center flex-1 p-6 bg-white shadow-lg rounded-xl">

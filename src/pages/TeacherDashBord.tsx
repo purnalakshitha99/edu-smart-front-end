@@ -1,7 +1,7 @@
 // TeacherDashBord.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import Webcam from "react-webcam";
-import { database, ref, onValue } from "../firebase"; // Make sure this points to the correct firebase.ts file
+import { database, ref, onValue, set } from "../firebase"; // Make sure this points to the correct firebase.ts file
 
 import {
   Menu,
@@ -45,6 +45,9 @@ const TeacherDashBord: React.FC<TeacherDashBordProps> = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [currentStudentId, setCurrentStudentId] = useState<string | null>(
+    localStorage.getItem("userId")
+  );
 
   // State to store emotion from localStorage
   const [emotion, setEmotion] = useState<string | null>(() => {
@@ -256,6 +259,70 @@ const TeacherDashBord: React.FC<TeacherDashBordProps> = () => {
       .finally(() => setIsLoading(false));
   };
 
+  const countNotFocusedStudents = () => {
+    return studentEmotions.filter(
+      (s) =>
+        s.emotion === "angry" ||
+        s.emotion === "disgust" ||
+        s.emotion === "scared" ||
+        s.emotion === "sad"
+    ).length;
+  };
+
+  // Function to calculate percentage of not focused students
+  const calculateNotFocusedPercentage = () => {
+    const totalStudents = studentEmotions.length;
+    const notFocusedStudents = countNotFocusedStudents();
+
+    if (totalStudents === 0) return 0; // Avoid division by zero
+
+    return ((notFocusedStudents / totalStudents) * 100).toFixed(2); // Calculate and format percentage
+  };
+
+  //--------------------------------
+  // Fetch data for the currently logged-in student only
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const currentStudentId = localStorage.getItem("userId");
+
+    if (!token || !currentStudentId) {
+      console.error("No authentication token found or no student ID");
+      return;
+    }
+
+    // Function to fetch emotion data for the current student
+    const fetchEmotionData = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:5003/api/student_emotions/${currentStudentId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setStudentEmotions(response.data.emotions); // Set state with only the current student's data
+      } catch (error) {
+        console.error("Error fetching student emotion data:", error);
+      }
+    };
+
+    fetchEmotionData();
+
+    return () => {
+      setStudentEmotions([]); // Clear the state when the component unmounts or the class ends
+    };
+  }, [currentStudentId]);
+
+  const handleEndClass = () => {
+    // Clear student emotion data from Firebase once class is over
+    const emotionRef = ref(database, "studentEmotions/" + currentStudentId);
+    set(emotionRef, null); // Remove emotion data for the logged-in student from Firebase
+    setStudentEmotions([]); // Clear the state as well
+    window.location.href = "/dashboard"; // Redirect to dashboard after class ends
+  };
+  //----------------------
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -445,10 +512,10 @@ const TeacherDashBord: React.FC<TeacherDashBordProps> = () => {
             </div>
             <div className="p-6 bg-white rounded-lg shadow-md">
               <h3 className="text-lg font-semibold text-gray-800">
-                Happy Students
+                Not Focused Students
               </h3>
               <p className="mt-2 text-3xl font-bold text-green-600">
-                {studentEmotions.filter((s) => s.emotion === "happy").length}
+                {calculateNotFocusedPercentage()}%
               </p>
             </div>
             <div className="p-6 bg-white rounded-lg shadow-md">
