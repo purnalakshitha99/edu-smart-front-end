@@ -1,9 +1,21 @@
-// TeacherDashBord.tsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import Webcam from "react-webcam";
 import { database, ref, onValue, set } from "../firebase"; // Make sure this points to the correct firebase.ts file
 
 import {
+  Menu,
+  FileText,
+  BarChart2,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Users,
+  BookOpen,
+  Bell,
+  Video,
+  VideoOff,
+  Mic,
+  MicOff,
   Menu,
   FileText,
   BarChart2,
@@ -31,6 +43,9 @@ interface StudentEmotion {
 }
 
 interface SidebarItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
   id: string;
   label: string;
   icon: React.ReactNode;
@@ -323,38 +338,37 @@ const TeacherDashBord: React.FC<TeacherDashBordProps> = () => {
   };
   //----------------------
 
-  return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div
-        className={`bg-indigo-800 text-white transition-all duration-300 ${
-          isSidebarOpen ? "w-64" : "w-20"
-        }`}
-      >
-        <div className="flex items-center justify-between p-4">
-          {isSidebarOpen && <h2 className="text-xl font-bold">TeacherBoard</h2>}
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 rounded-lg hover:bg-indigo-700"
-          >
-            {isSidebarOpen ? <ChevronLeft /> : <ChevronRight />}
-          </button>
-        </div>
-        <nav className="mt-8">
-          {sidebarItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center p-4 hover:bg-indigo-700 transition-colors
+    return (
+        <div className="flex h-screen bg-gray-100">
+            {/* Sidebar */}
+            <div
+                className={`bg-indigo-800 text-white transition-all duration-300 ${isSidebarOpen ? "w-64" : "w-20"
+                    }`}
+            >
+                <div className="flex items-center justify-between p-4">
+                    {isSidebarOpen && <h2 className="text-xl font-bold">TeacherBoard</h2>}
+                    <button
+                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        className="p-2 rounded-lg hover:bg-indigo-700"
+                    >
+                        {isSidebarOpen ? <ChevronLeft /> : <ChevronRight />}
+                    </button>
+                </div>
+                <nav className="mt-8">
+                    {sidebarItems.map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => setActiveTab(item.id)}
+                            className={`w-full flex items-center p-4 hover:bg-indigo-700 transition-colors
              ${activeTab === item.id ? "bg-indigo-700" : ""}
              ${!isSidebarOpen ? "justify-center" : ""}`}
-            >
-              <span className="w-6 h-6">{item.icon}</span>
-              {isSidebarOpen && <span className="ml-4">{item.label}</span>}
-            </button>
-          ))}
-        </nav>
-      </div>
+                        >
+                            <span className="w-6 h-6">{item.icon}</span>
+                            {isSidebarOpen && <span className="ml-4">{item.label}</span>}
+                        </button>
+                    ))}
+                </nav>
+            </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">

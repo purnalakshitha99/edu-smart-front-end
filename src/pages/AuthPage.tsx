@@ -121,6 +121,7 @@ function AuthPage() {
                 localStorage.setItem("token", token);
                 localStorage.setItem("userid",userid)
                 localStorage.setItem("imageurl", imageurl)
+                localStorage.setItem("username", username)
                 
                 
                 if (fetchedUsername) { // Check if username is defined
