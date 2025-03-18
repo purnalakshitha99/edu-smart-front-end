@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const UploadDocument = () => {
   const [file, setFile] = useState(null);
@@ -10,6 +11,8 @@ const UploadDocument = () => {
 
   const [quizName, setQuizName] = useState(""); // New state for quiz name
   const [quizTime, setQuizTime] = useState(0); // New state for quiz time in minutes
+
+  const navigate = useNavigate();
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -155,7 +158,7 @@ const UploadDocument = () => {
       // Include quizName and quizTime in the data sent to the backend.
       const quizData = {
         name: quizName,
-        time: quizTime,
+        time_limit: quizTime,
         questions: Qa,
       };
 
@@ -175,6 +178,7 @@ const UploadDocument = () => {
 
       const data = await res.json();
       console.log("Data saved successfully:", data);
+      navigate("/teacherhomepage");
     } catch (err) {
       console.error("Failed to save data:", err);
       setError(err.message || "An error occurred while saving the data.");
