@@ -17,6 +17,7 @@
     "axios": "^1.8.2",
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
+    "firebase": "^11.4.0",
     "html2pdf.js": "^0.10.3",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.0.4",
