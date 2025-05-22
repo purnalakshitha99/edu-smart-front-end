@@ -47,15 +47,15 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
+      <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="text-2xl font-bold text-blue-600">
-              EDUSmart
+              EDUSMART
             </Link>
           </div>
 
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="items-center hidden space-x-8 md:flex">
             <Link to="/" className="text-gray-700 hover:text-gray-900">
               Home
             </Link>
@@ -77,7 +77,7 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Search className="h-5 w-5 text-gray-500" />
+            <Search className="w-5 h-5 text-gray-500" />
 
             <div className="relative" ref={dropdownRef}>
               {profileImage ? (
@@ -85,18 +85,18 @@ const Navbar = () => {
                   <img
                     src={profileImage}
                     alt="Profile"
-                    className="h-10 w-10 rounded-full border-2 border-gray-300 cursor-pointer"
+                    className="w-10 h-10 border-2 border-gray-300 rounded-full cursor-pointer"
                   />
                 </button>
               ) : (
                 <User
-                  className="h-5 w-5 text-gray-500 cursor-pointer"
+                  className="w-5 h-5 text-gray-500 cursor-pointer"
                   onClick={toggleDropdown}
                 />
               )}
 
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl z-10">
+                <div className="absolute right-0 z-10 w-48 mt-2 bg-white rounded-md shadow-xl">
                   <Link
                     to="/profile"
                     className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
@@ -105,7 +105,7 @@ const Navbar = () => {
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100 w-full text-left"
+                    className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100"
                   >
                     Logout
                   </button>
