@@ -236,14 +236,14 @@ function AuthPage() {
             newErrors.username = "Username must be at least 3 characters";
         }
 
-        // Password validation
-        if (!password) {
-            newErrors.password = "Password is required";
-        } else if (password.length < 6) {
-            newErrors.password = "Password must be at least 6 characters";
-        } else if (!/(?=.*[A-Z])(?=.*[a-z])(?=.*\d)/.test(password)) {
-            newErrors.password = "Password must contain at least one uppercase letter, one lowercase letter, and one number";
-        }
+        // // Password validation
+        // if (!password) {
+        //     newErrors.password = "Password is required";
+        // } else if (password.length < 6) {
+        //     newErrors.password = "Password must be at least 6 characters";
+        // } else if (!/(?=.*[A-Z])(?=.*[a-z])(?=.*\d)/.test(password)) {
+        //     newErrors.password = "Password must contain at least one uppercase letter, one lowercase letter, and one number";
+        // }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
