@@ -11,8 +11,21 @@ function AuthPage() {
     const [password, setPassword] = useState("");
     const [email, setEmail] = useState("");
     const [profilePicture, setProfilePicture] = useState<File | null>(null);
+    const [studentYear, setStudentYear] = useState("");
+    const [studentId, setStudentId] = useState("");
+    const [address, setAddress] = useState("");
+    const [gender, setGender] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isLoading, setIsLoading] = useState(false); // Add loading state
+    const [errors, setErrors] = useState<{
+        email?: string;
+        studentYear?: string;
+        studentId?: string;
+        address?: string;
+        gender?: string;
+        username?: string;
+        password?: string;
+    }>({});
 
     const backendURL = "http://127.0.0.1:5000";
 
@@ -21,6 +34,10 @@ function AuthPage() {
         setPassword("");
         setEmail("");
         setProfilePicture(null);
+        setStudentYear("");
+        setStudentId("");
+        setAddress("");
+        setGender("");
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
@@ -35,6 +52,10 @@ function AuthPage() {
             formData.append("password", password);
             formData.append("email", email);
             formData.append("role", "student");
+            formData.append("student_year", studentYear);
+            formData.append("student_id", studentId);
+            formData.append("address", address);
+            formData.append("gender", gender);
             if (profilePicture) {
                 formData.append("profile_picture", profilePicture);
             }
@@ -174,12 +195,68 @@ function AuthPage() {
         }
     };
 
+    const validateForm = () => {
+        const newErrors: typeof errors = {};
+        
+        // Email validation
+        if (!email) {
+            newErrors.email = "Email is required";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            newErrors.email = "Please enter a valid email address";
+        }
+
+        // Student ID validation
+        if (!studentId) {
+            newErrors.studentId = "Student ID is required";
+        } else if (!/^\d{8}$/.test(studentId)) {
+            newErrors.studentId = "Student ID must be 8 digits";
+        }
+
+        // Grade validation
+        if (!studentYear) {
+            newErrors.studentYear = "Grade is required";
+        }
+
+        // Address validation
+        if (!address) {
+            newErrors.address = "Address is required";
+        } else if (address.length < 10) {
+            newErrors.address = "Address must be at least 10 characters";
+        }
+
+        // Gender validation
+        if (!gender) {
+            newErrors.gender = "Gender is required";
+        }
+
+        // Username validation
+        if (!username) {
+            newErrors.username = "Username is required";
+        } else if (username.length < 3) {
+            newErrors.username = "Username must be at least 3 characters";
+        }
+
+        // // Password validation
+        // if (!password) {
+        //     newErrors.password = "Password is required";
+        // } else if (password.length < 6) {
+        //     newErrors.password = "Password must be at least 6 characters";
+        // } else if (!/(?=.*[A-Z])(?=.*[a-z])(?=.*\d)/.test(password)) {
+        //     newErrors.password = "Password must contain at least one uppercase letter, one lowercase letter, and one number";
+        // }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         if (isLogin) {
             handleLogin();
         } else {
-            handleRegister();
+            if (validateForm()) {
+                handleRegister();
+            }
         }
     };
 
@@ -239,93 +316,46 @@ function AuthPage() {
                         </button>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {!isLogin && (
-                            <>
-                                <div>
-                                    <label className="block mb-2 text-sm font-medium text-gray-700">
-                                        Email Address
-                                    </label>
-                                    <input
-                                        type="email"
-                                        required
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
-                                        placeholder="Enter your email"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block mb-2 text-sm font-medium text-gray-700">
-                                        Profile Picture
-                                    </label>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleProfilePictureChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
-                                        ref={fileInputRef}
-                                    />
-
-                                    {profilePicture && (
-                                        <div className="mt-2">
-                                            <img
-                                                src={URL.createObjectURL(profilePicture)}
-                                                alt="Profile Preview"
-                                                className="object-cover w-24 h-24 rounded-full"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={handleRemovePicture}
-                                                className="mt-1 text-sm text-red-500 hover:text-red-700"
-                                            >
-                                                Remove
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </>
-                        )}
-
-                        <div>
-                            <label className="block mb-2 text-sm font-medium text-gray-700">
-                                Username
-                            </label>
-                            <input
-                                type="text"
-                                required
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
-                                placeholder="Enter your username"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block mb-2 text-sm font-medium text-gray-700">
-                                Password
-                            </label>
-                            <div className="relative">
+                    {isLogin ? (
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Login form fields */}
+                            <div>
+                                <label className="block mb-2 text-sm font-medium text-gray-700">
+                                    Username
+                                </label>
                                 <input
-                                    type={showPassword ? "text" : "password"}
+                                    type="text"
                                     required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
-                                    placeholder="Enter your password"
+                                    placeholder="Enter your username"
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute text-gray-500 -translate-y-1/2 right-3 top-1/2 hover:text-gray-700"
-                                >
-                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                </button>
                             </div>
-                        </div>
 
-                        {isLogin && (
+                            <div>
+                                <label className="block mb-2 text-sm font-medium text-gray-700">
+                                    Password
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
+                                        placeholder="Enter your password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute text-gray-500 -translate-y-1/2 right-3 top-1/2 hover:text-gray-700"
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="flex items-center justify-between text-sm">
                                 <label className="flex items-center">
                                     <input
@@ -341,16 +371,265 @@ function AuthPage() {
                                     Forgot password?
                                 </button>
                             </div>
-                        )}
 
-                        <button
-                            type="submit"
-                            className="w-full px-4 py-3 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                            disabled={isLoading} // Disable the button while loading
-                        >
-                            {isLoading ? "Loading..." : (isLogin ? "Sign In" : "Create Account")}
-                        </button>
-                    </form>
+                            <button
+                                type="submit"
+                                className="w-full px-4 py-3 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? "Loading..." : "Sign In"}
+                            </button>
+                        </form>
+                    ) : (
+                        <div className="flex flex-col h-[calc(100vh-250px)]">
+                            <div className="flex-1 overflow-y-auto pr-2">
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div>
+                                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                                            Email Address
+                                        </label>
+                                        <input
+                                            type="email"
+                                            required
+                                            value={email}
+                                            onChange={(e) => {
+                                                setEmail(e.target.value);
+                                                if (errors.email) {
+                                                    setErrors(prev => ({ ...prev, email: undefined }));
+                                                }
+                                            }}
+                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 ${
+                                                errors.email ? 'border-red-500' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your email"
+                                        />
+                                        {errors.email && (
+                                            <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                                            Grade
+                                        </label>
+                                        <select
+                                            required
+                                            value={studentYear}
+                                            onChange={(e) => {
+                                                setStudentYear(e.target.value);
+                                                if (errors.studentYear) {
+                                                    setErrors(prev => ({ ...prev, studentYear: undefined }));
+                                                }
+                                            }}
+                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 ${
+                                                errors.studentYear ? 'border-red-500' : 'border-gray-300'
+                                            }`}
+                                        >
+                                            <option value="">Select Grade</option>
+                                            <option value="6">Grade 6</option>
+                                            <option value="7">Grade 7</option>
+                                            <option value="8">Grade 8</option>
+                                            <option value="9">Grade 9</option>
+                                            <option value="10">Grade 10</option>
+                                            <option value="11">Grade 11</option>
+                                            <option value="12">Grade 12</option>
+                                            <option value="13">Grade 13</option>
+                                        </select>
+                                        {errors.studentYear && (
+                                            <p className="mt-1 text-sm text-red-500">{errors.studentYear}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                                            Student ID Number
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={studentId}
+                                            onChange={(e) => {
+                                                setStudentId(e.target.value);
+                                                if (errors.studentId) {
+                                                    setErrors(prev => ({ ...prev, studentId: undefined }));
+                                                }
+                                            }}
+                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 ${
+                                                errors.studentId ? 'border-red-500' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your student ID number"
+                                        />
+                                        {errors.studentId && (
+                                            <p className="mt-1 text-sm text-red-500">{errors.studentId}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                                            Address
+                                        </label>
+                                        <textarea
+                                            required
+                                            value={address}
+                                            onChange={(e) => {
+                                                setAddress(e.target.value);
+                                                if (errors.address) {
+                                                    setErrors(prev => ({ ...prev, address: undefined }));
+                                                }
+                                            }}
+                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 ${
+                                                errors.address ? 'border-red-500' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your address"
+                                            rows={3}
+                                        />
+                                        {errors.address && (
+                                            <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                                            Gender
+                                        </label>
+                                        <div className="flex gap-4">
+                                            <label className="flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="gender"
+                                                    value="male"
+                                                    checked={gender === "male"}
+                                                    onChange={(e) => {
+                                                        setGender(e.target.value);
+                                                        if (errors.gender) {
+                                                            setErrors(prev => ({ ...prev, gender: undefined }));
+                                                        }
+                                                    }}
+                                                    className="mr-2 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                />
+                                                <span className="text-gray-600">Male</span>
+                                            </label>
+                                            <label className="flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="gender"
+                                                    value="female"
+                                                    checked={gender === "female"}
+                                                    onChange={(e) => {
+                                                        setGender(e.target.value);
+                                                        if (errors.gender) {
+                                                            setErrors(prev => ({ ...prev, gender: undefined }));
+                                                        }
+                                                    }}
+                                                    className="mr-2 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                />
+                                                <span className="text-gray-600">Female</span>
+                                            </label>
+                                        </div>
+                                        {errors.gender && (
+                                            <p className="mt-1 text-sm text-red-500">{errors.gender}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                                            Username
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={username}
+                                            onChange={(e) => {
+                                                setUsername(e.target.value);
+                                                if (errors.username) {
+                                                    setErrors(prev => ({ ...prev, username: undefined }));
+                                                }
+                                            }}
+                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 ${
+                                                errors.username ? 'border-red-500' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your username"
+                                        />
+                                        {errors.username && (
+                                            <p className="mt-1 text-sm text-red-500">{errors.username}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                                            Password
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                required
+                                                value={password}
+                                                onChange={(e) => {
+                                                    setPassword(e.target.value);
+                                                    if (errors.password) {
+                                                        setErrors(prev => ({ ...prev, password: undefined }));
+                                                    }
+                                                }}
+                                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 ${
+                                                    errors.password ? 'border-red-500' : 'border-gray-300'
+                                                }`}
+                                                placeholder="Enter your password"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute text-gray-500 -translate-y-1/2 right-3 top-1/2 hover:text-gray-700"
+                                            >
+                                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                            </button>
+                                        </div>
+                                        {errors.password && (
+                                            <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                                            Profile Picture
+                                        </label>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleProfilePictureChange}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
+                                            ref={fileInputRef}
+                                        />
+                                        {profilePicture && (
+                                            <div className="mt-2">
+                                                <img
+                                                    src={URL.createObjectURL(profilePicture)}
+                                                    alt="Profile Preview"
+                                                    className="object-cover w-24 h-24 rounded-full"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRemovePicture}
+                                                    className="mt-1 text-sm text-red-500 hover:text-red-700"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </form>
+                            </div>
+                            <div className="flex-none pt-4 mt-4 border-t border-gray-200">
+                                <button
+                                    type="submit"
+                                    onClick={handleSubmit}
+                                    className="w-full px-4 py-3 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? "Loading..." : "Create Account"}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
