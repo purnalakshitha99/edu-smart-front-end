@@ -23,6 +23,8 @@ import TeacherDashBord from './pages/TeacherDashBord';
 import ProfilePage from './pages/ProfilePage';
 import { useEffect, useState } from 'react';
 import Test from './pages/Test';
+import QuizList from './pages/attemptQuiz/Quizess';
+import FileUpload from './pages/UploadDocument';
 
 function App() { 
   return (
@@ -43,6 +45,8 @@ function App() {
           <Route path='/teacherlogin'element={<TeacherAuth/>}/>
           <Route path="/login" element={<AuthPage />} />
           <Route path="/exam/:examId" element={<><Navbar /><ExamRoom /><Footer /></>} />
+          <Route path="/quizess" element={<><Navbar /><QuizList /><Footer /></>} />
+          
           <Route path='/roleselection' element={<RoleSelection/>}/>
           <Route path='/ethicalReport' element={<EthicalReportPage />} />
           <Route path='/teacherlogin' element={<TeacherAuth />} />
