@@ -1,29 +1,124 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Upload,
+  FileText,
+  Clock,
+  BookOpen,
+  Hash,
+  Calendar,
+  Save,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  List,
+} from "lucide-react";
 
-const UploadDocument = () => {
+const FileUpload = () => {
+  // Form state
   const [file, setFile] = useState(null);
+  const [examName, setExamName] = useState("");
+  const [subject, setSubject] = useState("");
+  const [noOfQuestions, setNoOfQuestions] = useState(10);
+  const [timeLimit, setTimeLimit] = useState(60);
+  const [examDate, setExamDate] = useState("");
+
+  const navigate = useNavigate();
+
+  // UI state
   const [qaPairs, setQaPairs] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [loadQa, setLoadQa] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [validationErrors, setValidationErrors] = useState({});
 
-  const [quizName, setQuizName] = useState(""); // New state for quiz name
-  const [quizTime, setQuizTime] = useState(0); // New state for quiz time in minutes
+  const fileInputRef = useRef(null);
 
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-  };
+  // Constants
+  const API_BASE_URL = "http://127.0.0.1:5005";
+  const MAX_FILE_SIZE = 16 * 1024 * 1024; // 16MB
+  const ALLOWED_FILE_TYPES = [".pdf"];
 
-  const handleQuizNameChange = (e) => {
-    setQuizName(e.target.value);
-  };
+  // Validation functions
+  const validateForm = useCallback(() => {
+    const errors = {};
 
-  const handleQuizTimeChange = (e) => {
-    setQuizTime(parseInt(e.target.value, 10)); // Parse to integer
-  };
+    if (!examName.trim()) errors.examName = "Exam name is required";
+    if (!subject.trim()) errors.subject = "Subject is required";
+    if (!noOfQuestions || noOfQuestions < 1 || noOfQuestions > 50) {
+      errors.noOfQuestions = "Number of questions must be between 1 and 50";
+    }
+    if (!timeLimit || timeLimit < 1)
+      errors.timeLimit = "Time limit must be at least 1 minute";
+    if (!file) errors.file = "Please select a PDF file";
 
-  const handleResponseData = (rawData) => {
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  }, [examName, subject, noOfQuestions, timeLimit, file]);
+
+  const validateFile = useCallback((selectedFile) => {
+    if (!selectedFile) return "No file selected";
+
+    const fileExtension =
+      "." + selectedFile.name.split(".").pop().toLowerCase();
+    if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
+      return "Only PDF files are supported";
+    }
+
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      return `File size must be less than ${MAX_FILE_SIZE / (1024 * 1024)}MB`;
+    }
+
+    return null;
+  }, []);
+
+  // Event handlers
+  const handleFileChange = useCallback(
+    (e) => {
+      const selectedFile = e.target.files[0];
+      const fileError = validateFile(selectedFile);
+
+      if (fileError) {
+        setError(fileError);
+        setFile(null);
+        return;
+      }
+
+      setFile(selectedFile);
+      setError(null);
+      setValidationErrors((prev) => ({ ...prev, file: null }));
+    },
+    [validateFile]
+  );
+
+  const handleInputChange = useCallback((field, value) => {
+    switch (field) {
+      case "examName":
+        setExamName(value);
+        break;
+      case "subject":
+        setSubject(value);
+        break;
+      case "noOfQuestions":
+        setNoOfQuestions(Math.max(1, Math.min(50, parseInt(value) || 0)));
+        break;
+      case "timeLimit":
+        setTimeLimit(Math.max(1, parseInt(value) || 0));
+        break;
+      case "examDate":
+        setExamDate(value);
+        break;
+    }
+    // Clear validation error for the field being edited
+    setValidationErrors((prev) => ({ ...prev, [field]: null }));
+  }, []);
+
+  // Process streaming response
+  const processStreamResponse = useCallback((rawData) => {
     try {
       const cleanData = rawData
         .replace(/\\n/g, "")
@@ -32,369 +127,490 @@ const UploadDocument = () => {
         .replace(/^"/, "")
         .replace(/"$/, "");
 
-      console.log("Cleaned Data:", cleanData);
-
       const parsedObject = JSON.parse(cleanData);
-
-      let qaArray = [];
-      if (Array.isArray(parsedObject)) {
-        qaArray = parsedObject;
-      } else {
-        qaArray = [parsedObject];
-      }
-
-      console.log("Final QA Array:", qaArray);
-      return qaArray;
+      return Array.isArray(parsedObject) ? parsedObject : [parsedObject];
     } catch (error) {
       console.error("Error parsing response data:", error);
       return [];
     }
-  };
+  }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Main form submission
+  const handleSubmit = useCallback(
+    async (e) => {
+      if (e) e.preventDefault();
 
-    if (!file) {
-      alert("Please select a file before submitting.");
-      return;
-    }
-
-    if (!quizName) {
-      alert("Please enter a quiz name.");
-      return;
-    }
-
-    if (!quizTime || quizTime <= 0) {
-      alert("Please enter a valid quiz time (in minutes).");
-      return;
-    }
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      setLoading(true);
-      setError(null);
-      setQaPairs([]);
-
-      const res = await fetch("http://127.0.0.1:5005/generate-qa", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        setLoading(false);
-        setError(errorData.error || "An unknown error occurred.");
+      if (!validateForm()) {
+        setError("Please fix the validation errors before submitting.");
         return;
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let result = "";
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("noOfQuestions", noOfQuestions.toString());
 
-      const stream = new ReadableStream({
-        start(controller) {
-          function push() {
-            reader
-              .read()
-              .then(({ done, value }) => {
-                if (done) {
-                  controller.close();
-                  setLoading(false);
-                  return;
-                }
+      try {
+        setLoading(true);
+        setError(null);
+        setQaPairs([]);
+        setProgress(0);
 
-                result += decoder.decode(value, { stream: true });
+        const response = await fetch(`${API_BASE_URL}/generate-qa`, {
+          method: "POST",
+          body: formData,
+          credentials: "include", // Include credentials in the request
+          mode: "cors", // Explicitly set CORS mode
+        });
 
-                const dataRegex = /^data: (.*)/;
-                const matches = result.match(dataRegex);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to generate questions");
+        }
 
-                if (matches && matches[1]) {
-                  let rawData = matches[1];
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let questionCount = 0;
 
-                  console.log("Raw Data before cleaning:", rawData);
+        while (true) {
+          const { done, value } = await reader.read();
 
-                  const qaArray = handleResponseData(rawData);
+          if (done) break;
 
-                  if (qaArray.length === 0) {
-                    setError("Failed to parse JSON response.");
-                    setLoading(false);
-                    return;
-                  }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || ""; // Keep incomplete line in buffer
 
-                  setQaPairs((prev) => [...prev, ...qaArray]);
-                  result = "";
-                }
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const dataStr = line.slice(6);
 
-                push();
-              })
-              .catch((err) => {
-                console.error("Error reading the stream:", err);
-                setError(err.message || "Error during stream processing.");
-                setLoading(false);
-              });
+              if (dataStr.includes('"status": "complete"')) {
+                setProgress(100);
+                break;
+              }
+
+              const qaArray = processStreamResponse(dataStr);
+              if (qaArray.length > 0) {
+                questionCount++;
+                setQaPairs((prev) => [...prev, ...qaArray]);
+                setProgress((questionCount / noOfQuestions) * 100);
+              }
+            }
           }
-          push();
-        },
-      });
+        }
+      } catch (err) {
+        console.error("File upload failed:", err);
+        setError(err.message || "An error occurred while processing the file.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [file, noOfQuestions, validateForm, processStreamResponse]
+  );
 
-      await new Response(stream);
-    } catch (err) {
-      console.error("File upload failed:", err);
-      setError(err.message || "An error occurred while processing the file.");
-      setLoading(false);
-    }
-  };
-
-  const save = async () => {
+  // Save exam to database
+  const handleSave = useCallback(async () => {
     try {
-      const Qa = qaPairs.slice(0, 10);
+      const selectedQuestions = qaPairs.slice(0, parseInt(noOfQuestions) || 10);
 
-      console.log("Split QA Pairs:", Qa);
-
-      // Include quizName and quizTime in the data sent to the backend.
-      const quizData = {
-        name: quizName,
-        time: quizTime,
-        questions: Qa,
+      const qaObject = {
+        name: examName,
+        subject: subject,
+        time_limit: parseInt(timeLimit),
+        num_questions: parseInt(noOfQuestions),
+        questions: selectedQuestions,
+        created_at: examDate || new Date().toISOString(),
       };
 
-      const res = await fetch("http://127.0.0.1:5005/save-qa", {
+      const response = await fetch(`${API_BASE_URL}/save-qa`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(quizData),
+        body: JSON.stringify(qaObject),
+        credentials: "include", // Include credentials in the request
+        mode: "cors", // Explicitly set CORS mode
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        setError(errorData.error || "An unknown error occurred.");
-        return;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save exam");
       }
 
-      const data = await res.json();
-      console.log("Data saved successfully:", data);
-    } catch (err) {
-      console.error("Failed to save data:", err);
-      setError(err.message || "An error occurred while saving the data.");
-    }
-  };
+      const data = await response.json();
+      console.log("Exam saved successfully:", data);
 
-  const renderQA = (qa, index) => {
-    if (qa && qa.question) {
+      // Reset form after successful save
+      setQaPairs([]);
+      setExamName("");
+      setSubject("");
+      setNoOfQuestions(10);
+      setTimeLimit(60);
+      setExamDate("");
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      alert("Exam saved successfully!");
+    } catch (err) {
+      console.error("Failed to save exam:", err);
+      setError(err.message || "An error occurred while saving the exam.");
+    }
+  }, [qaPairs, noOfQuestions, examName, subject, timeLimit, examDate]);
+
+  // Render individual QA item
+  const renderQAItem = useCallback(
+    (qa, index) => {
+      if (!qa || !qa.question) return null;
+
       return (
         <div
           key={index}
-          style={{
-            marginBottom: "20px",
-            padding: "10px",
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            backgroundColor: "#fafafa",
-          }}
+          className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
         >
-          <h3
-            style={{
-              backgroundColor: "#f4f4f4",
-              padding: "5px",
-              borderRadius: "5px",
-              fontSize: "16px",
-              marginBottom: "10px",
-            }}
-          >
-            <span>
-              <strong>{index + 1}:</strong>
-            </span>
-            {qa.question}
-          </h3>
-          <ul style={{ listStyleType: "none", paddingLeft: "0" }}>
-            {qa.options &&
-              qa.options.map((option, i) => (
-                <li key={i} style={{ marginBottom: "10px" }}>
+          <div className="flex items-start justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800 flex-1">
+              <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 text-sm font-medium rounded-full mr-3">
+                {index + 1}
+              </span>
+              {qa.question}
+            </h3>
+          </div>
+
+          {qa.options && qa.options.length > 0 && (
+            <div className="space-y-3">
+              {qa.options.map((option, optionIndex) => {
+                const isSelected =
+                  selectedOption?.question === index &&
+                  selectedOption?.answer === optionIndex;
+                const isCorrect = optionIndex === qa.answer - 1;
+
+                return (
                   <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      fontSize: "14px",
-                    }}
+                    key={optionIndex}
+                    className={`flex items-center p-3 rounded-lg border transition-colors cursor-pointer ${
+                      isSelected
+                        ? isCorrect
+                          ? "bg-green-50 border-green-200"
+                          : "bg-red-50 border-red-200"
+                        : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                    }`}
                   >
                     <input
                       type="radio"
                       name={`question-${index}`}
-                      value={i}
-                      checked={
-                        selectedOption &&
-                        selectedOption.question === index &&
-                        selectedOption.answer === i
-                      }
+                      value={optionIndex}
+                      checked={isSelected}
                       onChange={() =>
                         setSelectedOption({
                           question: index,
-                          answer: i,
+                          answer: optionIndex,
                         })
                       }
-                      style={{
-                        marginRight: "10px",
-                        accentColor: i === qa.answer - 1 ? "green" : "red",
-                      }}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
                     />
-                    {option}
-                  </label>
-                  {selectedOption &&
-                    selectedOption.question === index &&
-                    selectedOption.answer === i && (
-                      <span
-                        style={{
-                          color: i === qa.answer - 1 ? "green" : "red",
-                          marginLeft: "5px",
-                          fontSize: "14px",
-                        }}
-                      >
-                        {i === qa.answer - 1 ? "Correct" : "Incorrect"}
-                      </span>
+                    <span className="ml-3 text-sm font-medium text-gray-900">
+                      {String.fromCharCode(65 + optionIndex)}. {option}
+                    </span>
+                    {isSelected && isCorrect && (
+                      <CheckCircle className="ml-auto w-5 h-5 text-green-600" />
                     )}
-                </li>
-              ))}
-          </ul>
+                    {isSelected && !isCorrect && (
+                      <AlertCircle className="ml-auto w-5 h-5 text-red-600" />
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+
+          {qa.explanation && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <h4 className="text-sm font-medium text-blue-800 mb-1">
+                Explanation:
+              </h4>
+              <p className="text-sm text-blue-700">{qa.explanation}</p>
+            </div>
+          )}
         </div>
       );
-    }
-    return null;
-  };
+    },
+    [selectedOption]
+  );
 
   return (
-    <div
-      style={{
-        padding: "20px",
-        border: "1px solid #ccc",
-        maxWidth: "500px",
-        margin: "0 auto",
-      }}
-    >
-      <h2 style={{ textAlign: "center", color: "#333" }}>
-        Upload PDF for QA Generation
-      </h2>
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Quiz Name"
-          value={quizName}
-          onChange={handleQuizNameChange}
-          style={{
-            marginBottom: "10px",
-            padding: "8px",
-            border: "1px solid #ccc",
-            width: "100%",
-            maxWidth: "400px",
-          }}
-        />
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h1 className="text-3xl font-bold text-gray-900">
+                Question Generator
+              </h1>
+              <button
+                onClick={() => navigate("/quizess")}
+                className="flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+              >
+                <List className="w-4 h-4 mr-2" />
+                View All Quizzes
+              </button>
+            </div>
+            <p className="text-gray-600">
+              Upload a PDF document to automatically generate questions and
+              answers
+            </p>
+          </div>
 
-        <input
-          type="number"
-          placeholder="Quiz Time (minutes)"
-          value={quizTime}
-          onChange={handleQuizTimeChange}
-          style={{
-            marginBottom: "10px",
-            padding: "8px",
-            border: "1px solid #ccc",
-            width: "100%",
-            maxWidth: "400px",
-          }}
-        />
+          {/* Form */}
+          <div className="space-y-6">
+            {/* Exam Details Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Exam Name
+                </label>
+                <input
+                  type="text"
+                  value={examName}
+                  onChange={(e) =>
+                    handleInputChange("examName", e.target.value)
+                  }
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    validationErrors.examName
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                  placeholder="Enter exam name"
+                />
+                {validationErrors.examName && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {validationErrors.examName}
+                  </p>
+                )}
+              </div>
 
-        <input
-          type="file"
-          accept=".pdf"
-          onChange={handleFileChange}
-          style={{
-            marginBottom: "10px",
-            padding: "8px",
-            border: "1px solid #ccc",
-            width: "100%",
-            maxWidth: "400px",
-          }}
-        />
-        <button
-          type="submit"
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#4CAF50",
-            color: "white",
-            border: "none",
-            cursor: "pointer",
-            width: "100%",
-            maxWidth: "400px",
-          }}
-        >
-          Submit
-        </button>
-      </form>
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => handleInputChange("subject", e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    validationErrors.subject
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                  placeholder="Enter subject"
+                />
+                {validationErrors.subject && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {validationErrors.subject}
+                  </p>
+                )}
+              </div>
 
-      {error && (
-        <p style={{ color: "red", textAlign: "center", fontSize: "14px" }}>
-          {error}
-        </p>
-      )}
-      {qaPairs && qaPairs.length > 0 && (
-        <div style={{ marginTop: "20px" }}>
-          {qaPairs.map((qa, index) => renderQA(qa, index))}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Hash className="w-4 h-4 mr-2" />
+                  Number of Questions
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={noOfQuestions}
+                  onChange={(e) =>
+                    handleInputChange("noOfQuestions", e.target.value)
+                  }
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    validationErrors.noOfQuestions
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                {validationErrors.noOfQuestions && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {validationErrors.noOfQuestions}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Clock className="w-4 h-4 mr-2" />
+                  Time Limit (minutes)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={timeLimit}
+                  onChange={(e) =>
+                    handleInputChange("timeLimit", e.target.value)
+                  }
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    validationErrors.timeLimit
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                {validationErrors.timeLimit && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {validationErrors.timeLimit}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <Calendar className="w-4 h-4 mr-2" />
+                Exam Date (Optional)
+              </label>
+              <input
+                type="date"
+                value={examDate}
+                onChange={(e) => handleInputChange("examDate", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* File Upload Section */}
+            <div>
+              <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload PDF Document
+              </label>
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center ${
+                  validationErrors.file
+                    ? "border-red-300 bg-red-50"
+                    : file
+                    ? "border-green-300 bg-green-50"
+                    : "border-gray-300 bg-gray-50"
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <label htmlFor="file-upload" className="cursor-pointer">
+                  <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                  <p className="text-sm text-gray-600 mb-2">
+                    {file ? file.name : "Click to upload or drag and drop"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    PDF files only, max 16MB
+                  </p>
+                </label>
+              </div>
+              {validationErrors.file && (
+                <p className="text-red-500 text-sm mt-1">
+                  {validationErrors.file}
+                </p>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-center">
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating Questions...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-4 h-4 mr-2" />
+                    Generate Questions
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          {loading && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Progress
+                </span>
+                <span className="text-sm text-gray-500">
+                  {Math.round(progress)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+
+          {/* Error Display */}
+          {error && (
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
+              <AlertCircle className="w-5 h-5 text-red-500 mr-3" />
+              <span className="text-red-700">{error}</span>
+            </div>
+          )}
+
+          {/* Generated Questions */}
+          {qaPairs.length > 0 && (
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Generated Questions ({qaPairs.length})
+                </h2>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowPreview(!showPreview)}
+                    className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    {showPreview ? (
+                      <EyeOff className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Eye className="w-4 h-4 mr-2" />
+                    )}
+                    {showPreview ? "Hide Preview" : "Show Preview"}
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Exam
+                  </button>
+                </div>
+              </div>
+
+              {showPreview && (
+                <div className="space-y-6">
+                  {qaPairs
+                    .slice(0, noOfQuestions)
+                    .map((qa, index) => renderQAItem(qa, index))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      )}
-      {loading && (
-        <p style={{ textAlign: "center", color: "#777" }}>Loading...</p>
-      )}
-
-      {qaPairs && qaPairs.length >= 10 && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginTop: "20px",
-          }}
-        >
-          <button
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#4CAF50",
-              color: "white",
-              border: "none",
-              cursor: "pointer",
-            }}
-            onClick={save}
-          >
-            Save Question
-          </button>
-        </div>
-      )}
-
-      {loadQa && <LoadQa />}
-
-      <button
-        style={{
-          padding: "10px 20px",
-          backgroundColor: "#4CAF50",
-          color: "white",
-          border: "none",
-          cursor: "pointer",
-          marginTop: "20px",
-        }}
-        onClick={() => {
-          setLoadQa(!loadQa);
-        }}
-      >
-        {loadQa ? "Hide QA" : "Load QA"}
-      </button>
+      </div>
     </div>
   );
 };
 
-export default UploadDocument;
+export default FileUpload;
