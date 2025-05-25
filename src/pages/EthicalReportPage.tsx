@@ -32,6 +32,7 @@ import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import UserReport from "../components/UserReport";
 
 // Interface definitions
 interface UserDetails {
@@ -1210,6 +1211,8 @@ const EthicalReportPage: React.FC = () => {
                 </div>
               )}
             </div>
+
+            <UserReport/>
           </div>
         </div>
       </div>
