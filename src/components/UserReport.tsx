@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Calendar, BookOpen, Award, Clock, FileText } from "lucide-react";
+import { BookOpen, Award, Clock, FileText } from "lucide-react";
 import axios from "axios";
 
 // Define types for report and examReport
@@ -108,7 +108,7 @@ const UserReport = () => {
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             Exam Reports
           </h1>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-4 text-sm text-gray-600 ">
             <span className="flex items-center gap-1">
               <FileText className="h-4 w-4" />
               Total Reports: {report.total}
@@ -125,7 +125,7 @@ const UserReport = () => {
           {report.reports.map((examReport: ExamReport) => (
             <div
               key={examReport.report_id}
-              className="bg-white rounded-lg shadow-md overflow-hidden"
+              className="bg-white rounded-lg shadow-md overflow-hidden p-5"
             >
               {/* Report Header */}
               <div className="">
