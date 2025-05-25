@@ -25,15 +25,15 @@ const TechQuizApp = () => {
   }, []);
   // Timer effect
   useEffect(() => {
-    if (quizStarted && quizData && quizData > 0 && !showResults) {
+    if (quizStarted && timeLeft > 0 && !showResults) {
       const timer = setTimeout(() => {
         setTimeLeft(timeLeft - 1);
       }, 1000);
       return () => clearTimeout(timer);
-    } else if (timeLeft <= 0 && quizStarted) {
+    } else if (timeLeft <= 0 && quizStarted && !showResults) {
       handleFinishQuiz();
     }
-  }, [timeLeft, quizStarted, showResults, quizData]);
+  }, [timeLeft, quizStarted, showResults]);
 
   const calculateScore = () => {
     let correctCount = 0;
