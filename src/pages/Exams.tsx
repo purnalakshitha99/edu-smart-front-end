@@ -292,12 +292,19 @@ const Exams: React.FC = () => {
   };
 
   const handleUserVerification = (username: string, headPose: string) => {
+    if (username === 'N/A') {
+      alert('Face verification failed. Please try again and ensure your face is clearly visible.');
+      setShowCameraPopup(false);
+      setVerifiedUsername(null);
+      setHeadPose(null);
+      return;
+    }
+
     setVerifiedUsername(username);
     setHeadPose(headPose);
-    setIsLoading(true); // Start loading after successful verification
+    setIsLoading(true);
     setShowCameraPopup(false);
 
-    // Proceed with starting the exam and API calls after a delay
     setTimeout(() => {
       Promise.all([
         axios.get("http://localhost:5000/ethical_benchmark", {
@@ -309,16 +316,18 @@ const Exams: React.FC = () => {
         }),
       ])
         .then(() => {
-          alert(`Face Detected: ${username}, Head Pose: ${headPose}`); //Display alert
+          alert(`Face Detected: ${username}, Head Pose: ${headPose}`);
         })
         .catch((error) => {
           console.error("Error during startup:", error);
           alert("Error during startup. Please try again.");
+          setVerifiedUsername(null);
+          setHeadPose(null);
         })
         .finally(() => {
           setIsLoading(false);
         });
-    }, 3000); //Delay for 3sec
+    }, 3000);
   };
 
   useEffect(() => {
