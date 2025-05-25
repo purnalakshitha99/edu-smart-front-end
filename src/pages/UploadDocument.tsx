@@ -448,6 +448,7 @@ const FileUpload = () => {
                 <input
                   type="number"
                   min="1"
+                  max={5}
                   value={timeLimit}
                   onChange={(e) =>
                     handleInputChange("timeLimit", e.target.value)
