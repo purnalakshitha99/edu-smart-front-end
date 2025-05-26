@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { Trophy } from "lucide-react";
+import { Trophy, FileText } from "lucide-react";
 
 interface UserProfile {
   _id: string;
@@ -71,6 +71,10 @@ const ProfilePage = () => {
     navigate("/answer-report");
   };
 
+  const handleViewEthicalReport = () => {
+    navigate("/ethicalReport");
+  };
+
   if (isLoading) {
     return (
       <>
@@ -132,13 +136,23 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <button
-            onClick={handleViewResults}
-            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            <Trophy className="w-5 h-5" />
-            View Exam Results
-          </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={handleViewResults}
+              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <Trophy className="w-5 h-5" />
+              View Exam Results
+            </button>
+
+            <button
+              onClick={handleViewEthicalReport}
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <FileText className="w-5 h-5" />
+              Ethical Report
+            </button>
+          </div>
         </div>
       </div>
       <Footer />
