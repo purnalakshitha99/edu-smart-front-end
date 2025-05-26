@@ -74,7 +74,7 @@ const FileUpload = () => {
       try {
         const draft = JSON.parse(savedDraft);
         const isRecent =
-          new Date() - new Date(draft.timestamp) < 24 * 60 * 60 * 1000; 
+          new Date() - new Date(draft.timestamp) < 24 * 60 * 60 * 1000;
 
         if (isRecent && draft.qaPairs && draft.qaPairs.length > 0) {
           const shouldRestore = window.confirm(
@@ -193,13 +193,14 @@ const FileUpload = () => {
         case "subject":
           setSubject(value);
           break;
-        case "noOfQuestions":
-          { const questions = Math.max(1, Math.min(50, parseInt(value) || 0));
+        case "noOfQuestions": {
+          const questions = Math.max(1, Math.min(50, parseInt(value) || 0));
           setNoOfQuestions(questions);
           if (qaPairs.length > questions) {
             setQaPairs((prev) => prev.slice(0, questions));
           }
-          break; }
+          break;
+        }
         case "timeLimit":
           setTimeLimit(Math.max(1, Math.min(300, parseInt(value) || 0)));
           break;
@@ -587,7 +588,7 @@ const FileUpload = () => {
                 Question Generator
               </h1>
               <button
-                onClick={() => navigate("/quizzes")}
+                onClick={() => navigate("/quizess")}
                 className="flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
               >
                 <List className="w-4 h-4 mr-2" />

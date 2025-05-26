@@ -38,16 +38,14 @@ const Company = () => {
           <div>
             <h2 className="text-3xl font-bold mb-6">Our Story</h2>
             <p className="text-gray-600 mb-6">
-              Founded in 2020, TORC has grown from a small startup to a leading online education platform. 
+              Founded in 2020, EDUSmart has grown from a small startup to a leading online education platform. 
               We believe that education should be accessible to everyone, regardless of their location or background.
             </p>
             <p className="text-gray-600 mb-6">
               Our team of dedicated professionals works tirelessly to create high-quality educational content 
               and provide the best learning experience for our students.
             </p>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
-              Join Our Team
-            </button>
+          
           </div>
         </div>
       </div>
