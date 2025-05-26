@@ -293,7 +293,9 @@ const Exams: React.FC = () => {
   };
 
   const handleUserVerification = (username: string, headPose: string) => {
-    if (username === 'N/A') {
+    const loggedInUsername = localStorage.getItem("username");
+    
+    if (username === 'N/A' || username !== loggedInUsername) {
       setUnauthorizedAccess(true);
       alert('Unauthorized Access: Face verification failed. Please ensure you are the registered user and your face is clearly visible.');
       setShowCameraPopup(false);
