@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Clock, AlertCircle, NotepadText, Captions, CalendarFold } from "lucide-react";
+import {
+  Clock,
+  AlertCircle,
+  NotepadText,
+  Captions,
+  CalendarFold,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -30,11 +36,11 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onStart }) => (
         <span>Questions: {exam.num_questions}</span>
       </div>
       <div className="flex items-center">
-        <Captions  className="w-4 h-4 mr-2" />
+        <Captions className="w-4 h-4 mr-2" />
         <span>Subject: {exam.subject}</span>
       </div>
       <div className="flex items-center">
-        <CalendarFold  className="w-4 h-4 mr-2" />
+        <CalendarFold className="w-4 h-4 mr-2" />
         <span>Date: {exam.created_at}</span>
       </div>
     </div>

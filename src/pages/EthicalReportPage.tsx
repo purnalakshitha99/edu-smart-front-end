@@ -1212,7 +1212,7 @@ const EthicalReportPage: React.FC = () => {
               )}
             </div>
 
-            <UserReport/>
+        
           </div>
         </div>
       </div>
