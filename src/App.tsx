@@ -24,6 +24,8 @@ import { useEffect, useState } from "react";
 import Test from "./pages/Test";
 import QuizList from "./pages/attemptQuiz/Quizess";
 import FileUpload from "./pages/UploadDocument";
+import AnswerReport from "./pages/AnswerReport";
+import ExamResultDetail from "./pages/ExamResultDetail";
 
 function App() {
   return (
@@ -139,7 +141,8 @@ function App() {
           <Route path="/ethicalReport" element={<EthicalReportPage />} />
           <Route path="/teacherlogin" element={<TeacherAuth />} />
           <Route path="/teacherhomepage" element={<TeachersHomePage />} />
-
+          <Route path="/answer-report" element={<AnswerReport />} />
+          <Route path="/result-details/:id" element={<ExamResultDetail />} />
           <Route path="/teacherdashbord" element={<TeacherDashBord />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Routes>
