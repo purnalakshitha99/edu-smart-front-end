@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Clock, AlertCircle, NotepadText, Captions, CalendarFold } from "lucide-react";
+import {
+  Clock,
+  AlertCircle,
+  NotepadText,
+  Captions,
+  CalendarFold,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -30,11 +36,11 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onStart }) => (
         <span>Questions: {exam.num_questions}</span>
       </div>
       <div className="flex items-center">
-        <Captions  className="w-4 h-4 mr-2" />
+        <Captions className="w-4 h-4 mr-2" />
         <span>Subject: {exam.subject}</span>
       </div>
       <div className="flex items-center">
-        <CalendarFold  className="w-4 h-4 mr-2" />
+        <CalendarFold className="w-4 h-4 mr-2" />
         <span>Date: {exam.created_at}</span>
       </div>
     </div>
@@ -259,11 +265,13 @@ const Exams: React.FC = () => {
   const [showCameraPopup, setShowCameraPopup] = useState(false);
   const [verifiedUsername, setVerifiedUsername] = useState<string | null>(null);
   const [headPose, setHeadPose] = useState<string | null>(null);
+  const [unauthorizedAccess, setUnauthorizedAccess] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [quizzes, setQuizzes] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
 
   const API_BASE_URL = "http://127.0.0.1:5005";
 
@@ -273,8 +281,13 @@ const Exams: React.FC = () => {
       return;
     }
 
-    setSelectedExamId(examId);
-    setShowRestrictions(true);
+    // Find the selected exam from quizzes array
+    const exam = quizzes.find((q: Exam) => q._id === examId);
+    if (exam) {
+      setSelectedExam(exam);
+      setSelectedExamId(examId);
+      setShowRestrictions(true);
+    }
   };
 
   const handleConfirmStart = () => {
@@ -292,33 +305,55 @@ const Exams: React.FC = () => {
   };
 
   const handleUserVerification = (username: string, headPose: string) => {
+    const loggedInUsername = localStorage.getItem("username");
+    
+    if (username === 'N/A' || username !== loggedInUsername) {
+      setUnauthorizedAccess(true);
+      alert('Unauthorized Access: Face verification failed. Please ensure you are the registered user and your face is clearly visible.');
+      setShowCameraPopup(false);
+      setVerifiedUsername(null);
+      setHeadPose(null);
+      return;
+    }
+
+    setUnauthorizedAccess(false);
     setVerifiedUsername(username);
     setHeadPose(headPose);
-    setIsLoading(true); // Start loading after successful verification
+    setIsLoading(true);
     setShowCameraPopup(false);
 
-    // Proceed with starting the exam and API calls after a delay
-    setTimeout(() => {
+    if (selectedExam) {
       Promise.all([
         axios.get("http://localhost:5000/ethical_benchmark", {
-          params: { userid: localStorage.getItem("userid") },
+          params: { 
+            userid: localStorage.getItem("userid"),
+            exam_duration: selectedExam.time_limit,
+            exam_id: selectedExam._id
+          },
         }),
         new Promise((resolve) => {
-          navigate(`/exam/${selectedExamId}`);
+          navigate(`/exam/${selectedExamId}`, { 
+            state: { 
+              examDuration: selectedExam.time_limit,
+              examId: selectedExam._id
+            }
+          });
           resolve("Navigated to exam");
         }),
       ])
         .then(() => {
-          alert(`Face Detected: ${username}, Head Pose: ${headPose}`); //Display alert
+          alert(`Face Detected: ${username}, Head Pose: ${headPose}\nExam Duration: ${selectedExam.time_limit} minutes`);
         })
         .catch((error) => {
           console.error("Error during startup:", error);
           alert("Error during startup. Please try again.");
+          setVerifiedUsername(null);
+          setHeadPose(null);
         })
         .finally(() => {
           setIsLoading(false);
         });
-    }, 3000); //Delay for 3sec
+    }
   };
 
   useEffect(() => {
@@ -366,6 +401,17 @@ const Exams: React.FC = () => {
             proctoring.
           </p>
         </div>
+
+        {unauthorizedAccess && (
+          <div className="p-4 mb-8 border-l-4 border-red-500 bg-red-50">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
+              <p className="text-red-700 font-semibold">
+                Unauthorized Access: Face verification failed. Please ensure you are the registered user and try again.
+              </p>
+            </div>
+          </div>
+        )}
 
         {showWarning && (
           <div className="p-4 mb-8 border-l-4 border-yellow-400 bg-yellow-50">
