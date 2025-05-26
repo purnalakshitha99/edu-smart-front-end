@@ -265,6 +265,7 @@ const Exams: React.FC = () => {
   const [error, setError] = useState(null);
   const [quizzes, setQuizzes] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
 
   const API_BASE_URL = "http://127.0.0.1:5005";
 
@@ -274,8 +275,13 @@ const Exams: React.FC = () => {
       return;
     }
 
-    setSelectedExamId(examId);
-    setShowRestrictions(true);
+    // Find the selected exam from quizzes array
+    const exam = quizzes.find((q: Exam) => q._id === examId);
+    if (exam) {
+      setSelectedExam(exam);
+      setSelectedExamId(examId);
+      setShowRestrictions(true);
+    }
   };
 
   const handleConfirmStart = () => {
@@ -311,27 +317,38 @@ const Exams: React.FC = () => {
     setShowCameraPopup(false);
 
     setTimeout(() => {
-      Promise.all([
-        axios.get("http://localhost:5000/ethical_benchmark", {
-          params: { userid: localStorage.getItem("userid") },
-        }),
-        new Promise((resolve) => {
-          navigate(`/exam/${selectedExamId}`);
-          resolve("Navigated to exam");
-        }),
-      ])
-        .then(() => {
-          alert(`Face Detected: ${username}, Head Pose: ${headPose}`);
-        })
-        .catch((error) => {
-          console.error("Error during startup:", error);
-          alert("Error during startup. Please try again.");
-          setVerifiedUsername(null);
-          setHeadPose(null);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+      if (selectedExam) {
+        Promise.all([
+          axios.get("http://localhost:5000/ethical_benchmark", {
+            params: { 
+              userid: localStorage.getItem("userid"),
+              exam_duration: selectedExam.time_limit, // Send exam duration in minutes
+              exam_id: selectedExam._id
+            },
+          }),
+          new Promise((resolve) => {
+            navigate(`/exam/${selectedExamId}`, { 
+              state: { 
+                examDuration: selectedExam.time_limit,
+                examId: selectedExam._id
+              }
+            });
+            resolve("Navigated to exam");
+          }),
+        ])
+          .then(() => {
+            alert(`Face Detected: ${username}, Head Pose: ${headPose}\nExam Duration: ${selectedExam.time_limit} minutes`);
+          })
+          .catch((error) => {
+            console.error("Error during startup:", error);
+            alert("Error during startup. Please try again.");
+            setVerifiedUsername(null);
+            setHeadPose(null);
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
+      }
     }, 1000);
   };
 
