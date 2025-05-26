@@ -22,7 +22,7 @@ const BlogPost = ({ title, excerpt, author, date, comments, image }: {
       </div>
       <h2 className="text-2xl font-bold mb-4">{title}</h2>
       <p className="text-gray-600 mb-4">{excerpt}</p>
-      <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
+      <a href="https://www.educations.com/articles-and-advice/5-reasons-online-learning-is-future-of-education-17146" className="text-blue-600 hover:text-blue-700 font-medium">
         Read More →
       </a>
     </div>

@@ -205,12 +205,12 @@ function AuthPage() {
             newErrors.email = "Please enter a valid email address";
         }
 
-        // Student ID validation
-        if (!studentId) {
-            newErrors.studentId = "Student ID is required";
-        } else if (!/^\d{8}$/.test(studentId)) {
-            newErrors.studentId = "Student ID must be 8 digits";
-        }
+        // // Student ID validation
+        // if (!studentId) {
+        //     newErrors.studentId = "Student ID is required";
+        // } else if (!/^\d{8}$/.test(studentId)) {
+        //     newErrors.studentId = "Student ID must be 8 digits";
+        // }
 
         // Grade validation
         if (!studentYear) {
