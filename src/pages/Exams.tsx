@@ -259,6 +259,7 @@ const Exams: React.FC = () => {
   const [showCameraPopup, setShowCameraPopup] = useState(false);
   const [verifiedUsername, setVerifiedUsername] = useState<string | null>(null);
   const [headPose, setHeadPose] = useState<string | null>(null);
+  const [unauthorizedAccess, setUnauthorizedAccess] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -292,12 +293,23 @@ const Exams: React.FC = () => {
   };
 
   const handleUserVerification = (username: string, headPose: string) => {
+    const loggedInUsername = localStorage.getItem("username");
+    
+    if (username === 'N/A' || username !== loggedInUsername) {
+      setUnauthorizedAccess(true);
+      alert('Unauthorized Access: Face verification failed. Please ensure you are the registered user and your face is clearly visible.');
+      setShowCameraPopup(false);
+      setVerifiedUsername(null);
+      setHeadPose(null);
+      return;
+    }
+
+    setUnauthorizedAccess(false);
     setVerifiedUsername(username);
     setHeadPose(headPose);
-    setIsLoading(true); // Start loading after successful verification
+    setIsLoading(true);
     setShowCameraPopup(false);
 
-    // Proceed with starting the exam and API calls after a delay
     setTimeout(() => {
       Promise.all([
         axios.get("http://localhost:5000/ethical_benchmark", {
@@ -309,16 +321,18 @@ const Exams: React.FC = () => {
         }),
       ])
         .then(() => {
-          alert(`Face Detected: ${username}, Head Pose: ${headPose}`); //Display alert
+          alert(`Face Detected: ${username}, Head Pose: ${headPose}`);
         })
         .catch((error) => {
           console.error("Error during startup:", error);
           alert("Error during startup. Please try again.");
+          setVerifiedUsername(null);
+          setHeadPose(null);
         })
         .finally(() => {
           setIsLoading(false);
         });
-    }, 3000); //Delay for 3sec
+    }, 1000);
   };
 
   useEffect(() => {
@@ -366,6 +380,17 @@ const Exams: React.FC = () => {
             proctoring.
           </p>
         </div>
+
+        {unauthorizedAccess && (
+          <div className="p-4 mb-8 border-l-4 border-red-500 bg-red-50">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
+              <p className="text-red-700 font-semibold">
+                Unauthorized Access: Face verification failed. Please ensure you are the registered user and try again.
+              </p>
+            </div>
+          </div>
+        )}
 
         {showWarning && (
           <div className="p-4 mb-8 border-l-4 border-yellow-400 bg-yellow-50">
