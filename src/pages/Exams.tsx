@@ -316,40 +316,38 @@ const Exams: React.FC = () => {
     setIsLoading(true);
     setShowCameraPopup(false);
 
-    setTimeout(() => {
-      if (selectedExam) {
-        Promise.all([
-          axios.get("http://localhost:5000/ethical_benchmark", {
-            params: { 
-              userid: localStorage.getItem("userid"),
-              exam_duration: selectedExam.time_limit, // Send exam duration in minutes
-              exam_id: selectedExam._id
-            },
-          }),
-          new Promise((resolve) => {
-            navigate(`/exam/${selectedExamId}`, { 
-              state: { 
-                examDuration: selectedExam.time_limit,
-                examId: selectedExam._id
-              }
-            });
-            resolve("Navigated to exam");
-          }),
-        ])
-          .then(() => {
-            alert(`Face Detected: ${username}, Head Pose: ${headPose}\nExam Duration: ${selectedExam.time_limit} minutes`);
-          })
-          .catch((error) => {
-            console.error("Error during startup:", error);
-            alert("Error during startup. Please try again.");
-            setVerifiedUsername(null);
-            setHeadPose(null);
-          })
-          .finally(() => {
-            setIsLoading(false);
+    if (selectedExam) {
+      Promise.all([
+        axios.get("http://localhost:5000/ethical_benchmark", {
+          params: { 
+            userid: localStorage.getItem("userid"),
+            exam_duration: selectedExam.time_limit,
+            exam_id: selectedExam._id
+          },
+        }),
+        new Promise((resolve) => {
+          navigate(`/exam/${selectedExamId}`, { 
+            state: { 
+              examDuration: selectedExam.time_limit,
+              examId: selectedExam._id
+            }
           });
-      }
-    }, 1000);
+          resolve("Navigated to exam");
+        }),
+      ])
+        .then(() => {
+          alert(`Face Detected: ${username}, Head Pose: ${headPose}\nExam Duration: ${selectedExam.time_limit} minutes`);
+        })
+        .catch((error) => {
+          console.error("Error during startup:", error);
+          alert("Error during startup. Please try again.");
+          setVerifiedUsername(null);
+          setHeadPose(null);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
   };
 
   useEffect(() => {
