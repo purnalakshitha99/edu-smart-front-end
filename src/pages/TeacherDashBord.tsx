@@ -225,6 +225,8 @@ const TeacherDashBord: React.FC<TeacherDashBordProps> = () => {
         return "🤢";
       case "scared":
         return "😨";
+      case "bored":
+        return "🥱";
       default:
         return "❓";
     }
@@ -259,12 +261,10 @@ const TeacherDashBord: React.FC<TeacherDashBordProps> = () => {
   };
 
   const countNotFocusedStudents = () => {
-    return studentEmotions.filter(
-      (s) =>
-        s.emotion === "angry" ||
-        s.emotion === "disgust" ||
-        s.emotion === "scared" ||
-        s.emotion === "sad"
+    return studentEmotions.filter((s) =>
+      ["angry", "disgust", "scared", "sad", "bored"].includes(
+        s.emotion?.toLowerCase() || ""
+      )
     ).length;
   };
 

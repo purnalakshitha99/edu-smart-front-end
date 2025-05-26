@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { database, ref, set, onValue } from "../firebase"; // Correct the path here
-// import firebase config
 
 const Card = ({
   children,
@@ -39,6 +38,8 @@ const CardContent = ({
 interface DrowsinessResponse {
   processed_frame: string;
   warnings: string[];
+  alarm_triggered: boolean; // Will be true only for sleep detection
+  notification_triggered: boolean; // True for both sleep and yawning
   error?: string;
 }
 
@@ -65,7 +66,7 @@ const ClassRoom = () => {
   const frameIntervalRef = useRef<number | null>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
 
-  const sendToFirebase = (emotion:string) => {
+  const sendToFirebase = (emotion: string) => {
     const emotionRef = ref(database, "studentEmotions/" + userId);
     set(emotionRef, {
       username: username,
@@ -288,7 +289,14 @@ const ClassRoom = () => {
               const newWarnings = [...prev, ...significantWarnings];
               return newWarnings.slice(-10);
             });
-            alertSound?.play();
+
+            // Only play sound if alarm_triggered is true (sleep detection)
+            if (drowsinessResult.alarm_triggered && alertSound) {
+              alertSound.play();
+              console.log("Playing alert sound for sleep detection");
+            } else if (drowsinessResult.notification_triggered) {
+              console.log("Showing notification only (no sound) for yawning");
+            }
           }
         }
       } else {
@@ -377,7 +385,6 @@ const ClassRoom = () => {
     return <div>Loading...</div>; // Or a spinner
   }
 
- 
   return (
     <div className="flex h-screen p-4 bg-blue-50">
       <div className="flex flex-col items-center flex-1 p-6 bg-white shadow-lg rounded-xl">
@@ -449,28 +456,6 @@ const ClassRoom = () => {
       </div>
 
       <div className="flex flex-col w-1/3 ml-4 space-y-4">
-        {/* Removing the Notifications Card */}
-        {/* <Card>
-                    <CardContent>
-                        <h3 className="mb-2 font-semibold text-md">Notifications</h3>
-                        <div className="p-4 space-y-2 text-sm bg-gray-100 rounded">
-                            <div className="flex items-center space-x-2">
-                                <Bell size={16} />
-                                <span>Frame count: {frameCount}</span>
-                            </div>
-                            {processedImage && (
-                                <div className="mt-2">
-                                    <img
-                                        src={`data:image/jpeg;base64,${processedImage}`}
-                                        alt="Processed frame"
-                                        className="w-full rounded"
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card> */}
-
         <Card>
           <CardContent className="relative">
             <div className="flex items-center justify-between mb-2">
@@ -489,7 +474,7 @@ const ClassRoom = () => {
                 warnings.map((warning, index) => (
                   <div
                     key={index}
-                    className="flex items-center space-x-2 text-sm text-yellow-800"
+                    className="flex items-center space-x-2 text-red-600 text-md"
                   >
                     <AlertCircle size={16} />
                     <span>{warning}</span>
