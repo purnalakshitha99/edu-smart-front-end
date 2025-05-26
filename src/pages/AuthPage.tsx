@@ -205,24 +205,24 @@ function AuthPage() {
             newErrors.email = "Please enter a valid email address";
         }
 
-        // Student ID validation
-        if (!studentId) {
-            newErrors.studentId = "Student ID is required";
-        } else if (!/^\d{8}$/.test(studentId)) {
-            newErrors.studentId = "Student ID must be 8 digits";
-        }
+        // // Student ID validation
+        // if (!studentId) {
+        //     newErrors.studentId = "Student ID is required";
+        // } else if (!/^\d{8}$/.test(studentId)) {
+        //     newErrors.studentId = "Student ID must be 8 digits";
+        // }
 
         // Grade validation
         if (!studentYear) {
             newErrors.studentYear = "Grade is required";
         }
 
-        // Address validation
-        if (!address) {
-            newErrors.address = "Address is required";
-        } else if (address.length < 10) {
-            newErrors.address = "Address must be at least 10 characters";
-        }
+        // // Address validation
+        // if (!address) {
+        //     newErrors.address = "Address is required";
+        // } else if (address.length < 10) {
+        //     newErrors.address = "Address must be at least 10 characters";
+        // }
 
         // Gender validation
         if (!gender) {
