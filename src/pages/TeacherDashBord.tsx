@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { io, Socket } from "socket.io-client";
+import UploadDocument from "./UploadDocument";
 
 interface TeacherDashBordProps {}
 
@@ -389,148 +390,156 @@ const TeacherDashBord: React.FC<TeacherDashBordProps> = () => {
         </header>
 
         {/* Content Grid */}
-        <div className="grid grid-cols-3 gap-6 p-6 h-[calc(100vh-5rem)] overflow-y-auto">
-          {/* Camera Feed */}
-          <div className="col-span-2 p-4 bg-white rounded-lg shadow-md">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Teacher Camera Feed</h2>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => setIsMicOn(!isMicOn)}
-                  className={`p-2 rounded-full ${
-                    isMicOn
-                      ? "bg-indigo-100 text-indigo-600"
-                      : "bg-red-100 text-red-600"
-                  }`}
-                >
-                  {isMicOn ? (
-                    <Mic className="w-5 h-5" />
-                  ) : (
-                    <MicOff className="w-5 h-5" />
-                  )}
-                </button>
-                <button
-                  onClick={() => setIsCameraOn(!isCameraOn)}
-                  className={`p-2 rounded-full ${
-                    isCameraOn
-                      ? "bg-indigo-100 text-indigo-600"
-                      : "bg-red-100 text-red-600"
-                  }`}
-                >
-                  {isCameraOn ? (
-                    <Video className="w-5 h-5" />
-                  ) : (
-                    <VideoOff className="w-5 h-5" />
-                  )}
-                </button>
+        {activeTab === "documents" ? (
+          // Render UploadDocument component
+          <div className="relative  flex  justify-center p-6 h-[calc(100vh-10rem)] overflow-auto">
+            <UploadDocument />
+          </div>
+        ) : (
+          // Main Content Grid (Camera Feed, Student Emotions, Statistics)
+          <div className="grid grid-cols-3 gap-6 p-6 h-[calc(100vh-5rem)] overflow-y-auto">
+            {/* Camera Feed */}
+            <div className="col-span-2 p-4 bg-white rounded-lg shadow-md">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Teacher Camera Feed</h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setIsMicOn(!isMicOn)}
+                    className={`p-2 rounded-full ${
+                      isMicOn
+                        ? "bg-indigo-100 text-indigo-600"
+                        : "bg-red-100 text-red-600"
+                    }`}
+                  >
+                    {isMicOn ? (
+                      <Mic className="w-5 h-5" />
+                    ) : (
+                      <MicOff className="w-5 h-5" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setIsCameraOn(!isCameraOn)}
+                    className={`p-2 rounded-full ${
+                      isCameraOn
+                        ? "bg-indigo-100 text-indigo-600"
+                        : "bg-red-100 text-red-600"
+                    }`}
+                  >
+                    {isCameraOn ? (
+                      <Video className="w-5 h-5" />
+                    ) : (
+                      <VideoOff className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              <div className="relative overflow-hidden bg-gray-900 rounded-lg aspect-video">
+                {isCameraOn ? (
+                  <Webcam
+                    className="object-cover w-full h-full"
+                    mirrored={true}
+                    audio={isMicOn}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full">
+                    <VideoOff className="w-16 h-16 text-gray-500" />
+                  </div>
+                )}
               </div>
             </div>
-            <div className="relative overflow-hidden bg-gray-900 rounded-lg aspect-video">
-              {isCameraOn ? (
-                <Webcam
-                  className="object-cover w-full h-full"
-                  mirrored={true}
-                  audio={isMicOn}
-                />
-              ) : (
-                <div className="flex items-center justify-center w-full h-full">
-                  <VideoOff className="w-16 h-16 text-gray-500" />
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* Student Emotions Panel */}
-          <div className="p-4 bg-white rounded-lg shadow-md">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Student Emotions</h2>
-              <button
-                onClick={() =>
-                  fetchInitialEmotionData(localStorage.getItem("token") || "")
-                }
-                className="px-3 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
-              >
-                Refresh
-              </button>
-            </div>
+            {/* Student Emotions Panel */}
+            <div className="p-4 bg-white rounded-lg shadow-md">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Student Emotions</h2>
+                <button
+                  onClick={() =>
+                    fetchInitialEmotionData(localStorage.getItem("token") || "")
+                  }
+                  className="px-3 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                >
+                  Refresh
+                </button>
+              </div>
 
-            <div className="space-y-4 max-h-[500px] overflow-y-auto">
-              {studentEmotions.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  No student emotion data available
-                </div>
-              ) : (
-                studentEmotions.map((emotionData) => (
-                  <div
-                    key={emotionData.student_id}
-                    className="flex items-center justify-between p-4 border-l-4 rounded-lg bg-gray-50"
-                    style={{
-                      borderLeftColor:
-                        emotionData.emotion === "happy"
-                          ? "#10B981"
-                          : emotionData.emotion === "sad"
-                          ? "#3B82F6"
-                          : emotionData.emotion === "angry"
-                          ? "#EF4444"
-                          : emotionData.emotion === "surprised"
-                          ? "#F59E0B"
-                          : emotionData.emotion === "neutral"
-                          ? "#6B7280"
-                          : "#9CA3AF",
-                    }}
-                  >
-                    <div>
-                      <h3 className="font-medium text-gray-900">
-                        {emotionData.username}{" "}
-                        <span className="text-xl">
-                          {getEmotionEmoji(emotionData.emotion)}
-                        </span>
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {emotionData.emotion || "Unknown"}
-                      </p>
-                    </div>
-                    <span className="text-xs text-gray-400">
-                      {formatTimestamp(emotionData.timestamp)}
-                    </span>
+              <div className="space-y-4 max-h-[500px] overflow-y-auto">
+                {studentEmotions.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    No student emotion data available
                   </div>
-                ))
-              )}
+                ) : (
+                  studentEmotions.map((emotionData) => (
+                    <div
+                      key={emotionData.student_id}
+                      className="flex items-center justify-between p-4 border-l-4 rounded-lg bg-gray-50"
+                      style={{
+                        borderLeftColor:
+                          emotionData.emotion === "happy"
+                            ? "#10B981"
+                            : emotionData.emotion === "sad"
+                            ? "#3B82F6"
+                            : emotionData.emotion === "angry"
+                            ? "#EF4444"
+                            : emotionData.emotion === "surprised"
+                            ? "#F59E0B"
+                            : emotionData.emotion === "neutral"
+                            ? "#6B7280"
+                            : "#9CA3AF",
+                      }}
+                    >
+                      <div>
+                        <h3 className="font-medium text-gray-900">
+                          {emotionData.username}{" "}
+                          <span className="text-xl">
+                            {getEmotionEmoji(emotionData.emotion)}
+                          </span>
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {emotionData.emotion || "Unknown"}
+                        </p>
+                      </div>
+                      <span className="text-xs text-gray-400">
+                        {formatTimestamp(emotionData.timestamp)}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-3 col-span-2 gap-6">
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Total Students
-              </h3>
-              <p className="mt-2 text-3xl font-bold text-indigo-600">
-                {studentEmotions.length}
-              </p>
-            </div>
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Not Focused Students
-              </h3>
-              <p className="mt-2 text-3xl font-bold text-green-600">
-                {calculateNotFocusedPercentage()}%
-              </p>
-            </div>
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Focused Students
-              </h3>
-              <p className="mt-2 text-3xl font-bold text-blue-600">
-                {
-                  studentEmotions.filter(
-                    (s) => s.emotion === "neutral" || s.emotion === "happy"
-                  ).length
-                }
-              </p>
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-3 col-span-2 gap-6">
+              <div className="p-6 bg-white rounded-lg shadow-md">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Total Students
+                </h3>
+                <p className="mt-2 text-3xl font-bold text-indigo-600">
+                  {studentEmotions.length}
+                </p>
+              </div>
+              <div className="p-6 bg-white rounded-lg shadow-md">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Not Focused Students
+                </h3>
+                <p className="mt-2 text-3xl font-bold text-green-600">
+                  {calculateNotFocusedPercentage()}%
+                </p>
+              </div>
+              <div className="p-6 bg-white rounded-lg shadow-md">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Focused Students
+                </h3>
+                <p className="mt-2 text-3xl font-bold text-blue-600">
+                  {
+                    studentEmotions.filter(
+                      (s) => s.emotion === "neutral" || s.emotion === "happy"
+                    ).length
+                  }
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

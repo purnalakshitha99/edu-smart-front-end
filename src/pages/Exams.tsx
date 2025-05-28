@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Clock, AlertCircle } from "lucide-react";
+import {
+  Clock,
+  AlertCircle,
+  NotepadText,
+  Captions,
+  CalendarFold,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -7,9 +13,9 @@ interface Exam {
   _id: string;
   name: string;
   time_limit: string;
-  questions: number;
-  completed: boolean;
-  date: string;
+  num_questions: number;
+  subject: string;
+  created_at: string;
 }
 
 interface ExamCardProps {
@@ -17,28 +23,35 @@ interface ExamCardProps {
   onStart: (id: string) => void;
 }
 
-const ExamCard: React.FC<ExamCardProps> = ({ exam, onStart }) => {
-  return (
-    <div className="p-6 bg-white rounded-lg shadow-md">
-      <h3 className="mb-3 text-xl font-semibold">{exam.name}</h3>
-      <div className="mb-4 space-y-2 text-gray-600">
-        <div className="flex items-center">
-          <Clock className="w-4 h-4 mr-2" />
-          <span>Time Limit : {exam.time_limit}</span>
-        </div>
-        <div>Questions: {exam.questions.length}</div>
-        <div>Subject: {exam.name}</div>
-        <div>Date: {exam.date}</div>
+const ExamCard: React.FC<ExamCardProps> = ({ exam, onStart }) => (
+  <div className="p-6 bg-white rounded-lg shadow-md">
+    <h3 className="mb-3 text-xl font-semibold">{exam.name}</h3>
+    <div className="mb-4 space-y-2 text-gray-600">
+      <div className="flex items-center">
+        <Clock className="w-4 h-4 mr-2" />
+        <span>Duration:{exam.time_limit}.00</span>
       </div>
-      <button
-        onClick={() => onStart(exam._id)}
-        className="w-full py-2 text-white transition-colors bg-blue-600 rounded-md hover:bg-blue-700"
-      >
-        Start Exam
-      </button>
+      <div className="flex items-center">
+        <NotepadText className="w-4 h-4 mr-2" />
+        <span>Questions: {exam.num_questions}</span>
+      </div>
+      <div className="flex items-center">
+        <Captions className="w-4 h-4 mr-2" />
+        <span>Subject: {exam.subject}</span>
+      </div>
+      <div className="flex items-center">
+        <CalendarFold className="w-4 h-4 mr-2" />
+        <span>Date: {exam.created_at}</span>
+      </div>
     </div>
-  );
-};
+    <button
+      onClick={() => onStart(exam._id)}
+      className="w-full py-2 text-white transition-colors bg-blue-600 rounded-md hover:bg-blue-700"
+    >
+      Start Exam
+    </button>
+  </div>
+);
 
 interface ExamRestrictionsProps {
   show: boolean;
@@ -252,6 +265,15 @@ const Exams: React.FC = () => {
   const [showCameraPopup, setShowCameraPopup] = useState(false);
   const [verifiedUsername, setVerifiedUsername] = useState<string | null>(null);
   const [headPose, setHeadPose] = useState<string | null>(null);
+  const [unauthorizedAccess, setUnauthorizedAccess] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [quizzes, setQuizzes] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
+
+  const API_BASE_URL = "http://127.0.0.1:5005";
 
   const handleStartExam = (examId: string) => {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -259,8 +281,13 @@ const Exams: React.FC = () => {
       return;
     }
 
-    setSelectedExamId(examId);
-    setShowRestrictions(true);
+    // Find the selected exam from quizzes array
+    const exam = quizzes.find((q: Exam) => q._id === examId);
+    if (exam) {
+      setSelectedExam(exam);
+      setSelectedExamId(examId);
+      setShowRestrictions(true);
+    }
   };
 
   const handleConfirmStart = () => {
@@ -278,52 +305,90 @@ const Exams: React.FC = () => {
   };
 
   const handleUserVerification = (username: string, headPose: string) => {
+    const loggedInUsername = localStorage.getItem("username");
+    
+    if (username === 'N/A' || username !== loggedInUsername) {
+      setUnauthorizedAccess(true);
+      alert('Unauthorized Access: Face verification failed. Please ensure you are the registered user and your face is clearly visible.');
+      setShowCameraPopup(false);
+      setVerifiedUsername(null);
+      setHeadPose(null);
+      return;
+    }
+
+    setUnauthorizedAccess(false);
     setVerifiedUsername(username);
     setHeadPose(headPose);
-    setIsLoading(true); // Start loading after successful verification
+    setIsLoading(true);
     setShowCameraPopup(false);
 
-    // Proceed with starting the exam and API calls after a delay
-    setTimeout(() => {
+    if (selectedExam) {
       Promise.all([
         axios.get("http://localhost:5000/ethical_benchmark", {
-          params: { userid: localStorage.getItem("userid") },
+          params: { 
+            userid: localStorage.getItem("userid"),
+            exam_duration: selectedExam.time_limit,
+            exam_id: selectedExam._id
+          },
         }),
         new Promise((resolve) => {
-          navigate(`/exam/${selectedExamId}`);
+          navigate(`/exam/${selectedExamId}`, { 
+            state: { 
+              examDuration: selectedExam.time_limit,
+              examId: selectedExam._id
+            }
+          });
           resolve("Navigated to exam");
         }),
       ])
         .then(() => {
-          alert(`Face Detected: ${username}, Head Pose: ${headPose}`); //Display alert
+          alert(`Face Detected: ${username}, Head Pose: ${headPose}\nExam Duration: ${selectedExam.time_limit} minutes`);
         })
         .catch((error) => {
           console.error("Error during startup:", error);
           alert("Error during startup. Please try again.");
+          setVerifiedUsername(null);
+          setHeadPose(null);
         })
         .finally(() => {
           setIsLoading(false);
         });
-    }, 3000); //Delay for 3sec
+    }
   };
 
-  const [exams, setExams] = useState([]);
-
   useEffect(() => {
-    const fetchExams = async () => {
-      try {
-        const response = await axios.get("http://localhost:5005/get-qa"); // Replace with your API endpoint for exams
+    fetchQuizzes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
-        setExams(response.data);
-        console.log("quizz",exams)
-      } catch (error) {
-        console.error("Error fetching exams:", error);
-        // Handle error
+  const fetchQuizzes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(
+        `${API_BASE_URL}/get-qa?page=${currentPage}&limit=10`,
+        {
+          credentials: "include",
+          mode: "cors",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch quizzes");
       }
-    };
-    fetchExams();
-  }, []);
-console.log("Quizezz",exams)
+
+      const data = await response.json();
+      setQuizzes(data.quizzes || []);
+      setTotalPages(data.total_pages || 1);
+    } catch (err) {
+      console.error("Error fetching quizzes:", err);
+      setError(err.message || "An error occurred while fetching quizzes");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="py-12 min-h-screen ">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -336,6 +401,17 @@ console.log("Quizezz",exams)
             proctoring.
           </p>
         </div>
+
+        {unauthorizedAccess && (
+          <div className="p-4 mb-8 border-l-4 border-red-500 bg-red-50">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
+              <p className="text-red-700 font-semibold">
+                Unauthorized Access: Face verification failed. Please ensure you are the registered user and try again.
+              </p>
+            </div>
+          </div>
+        )}
 
         {showWarning && (
           <div className="p-4 mb-8 border-l-4 border-yellow-400 bg-yellow-50">
@@ -350,8 +426,8 @@ console.log("Quizezz",exams)
         )}
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {exams.map((exam) => (
-            <ExamCard key={exam._id} exam={exam} onStart={handleStartExam} />
+          {quizzes.map((exam, index) => (
+            <ExamCard key={index} exam={exam} onStart={handleStartExam} />
           ))}
         </div>
       </div>
