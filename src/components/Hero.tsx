@@ -13,12 +13,13 @@ const Hero = () => {
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="grid items-center grid-cols-1 gap-8 md:grid-cols-2">
           <div>
-            <p className="mb-2 text-sm text-gray-600">By themadbrains in Inspiration</p>
+            <p className="mb-2 text-sm text-gray-600">Edu-Smart,</p>
             <h1 className="mb-4 text-3xl font-bold text-gray-900">
-              Why Swift UI Should Be on the Radar of Every Mobile Developer
+              Revolutionizing 
+              E-Learning with AI
             </h1>
             <p className="mb-6 text-gray-600">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor lorem ipsum dolor sit amet de aliqua tempor.
+              EduSmart combines advanced AI technologies to enhance student engagement, ensure academic integrity, and automate assessments in e-learning environments.
             </p>
             <button 
               onClick={handleStartLearning} 
