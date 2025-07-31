@@ -29,7 +29,7 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onStart }) => (
     <div className="mb-4 space-y-2 text-gray-600">
       <div className="flex items-center">
         <Clock className="w-4 h-4 mr-2" />
-        <span>Duration:{exam.time_limit}.00</span>
+        <span>Duration: 0{exam.time_limit} minutes</span>
       </div>
       <div className="flex items-center">
         <NotepadText className="w-4 h-4 mr-2" />

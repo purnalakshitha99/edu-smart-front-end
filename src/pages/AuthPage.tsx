@@ -217,12 +217,12 @@ function AuthPage() {
             newErrors.studentYear = "Grade is required";
         }
 
-        // Address validation
-        if (!address) {
-            newErrors.address = "Address is required";
-        } else if (address.length < 10) {
-            newErrors.address = "Address must be at least 10 characters";
-        }
+        // // Address validation
+        // if (!address) {
+        //     newErrors.address = "Address is required";
+        // } else if (address.length < 10) {
+        //     newErrors.address = "Address must be at least 10 characters";
+        // }
 
         // Gender validation
         if (!gender) {
